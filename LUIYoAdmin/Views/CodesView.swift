@@ -201,9 +201,9 @@ struct LabeledField: View {
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
                 .padding(.horizontal, 12)
-                .frame(height: 44)
+                .frame(height: 40)
                 .background(Color(.systemGray6))
-                .cornerRadius(22)
+                .cornerRadius(20)
                 .keyboardType(kbType)
         }
         .listRowSeparator(.hidden)

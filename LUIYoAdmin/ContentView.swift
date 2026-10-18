@@ -9,6 +9,7 @@ struct ContentView: View {
     @EnvironmentObject var api: AdminAPI
     @EnvironmentObject var display: AppDisplaySettings
     @State private var tab: AdminTab = .overview
+    @State private var autoLoginAttempted = false
 
     var body: some View {
         Group {
@@ -45,10 +46,31 @@ struct ContentView: View {
                         }
                         .tag(AdminTab.versions)
                 }
+            } else if autoLoginAttempted {
+                // 自动登录中，显示 loading（比登录页闪一下更快）
+                ProgressView("登录中…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 LoginView()
             }
         }
         .environment(\.font, display.defaultFont)
+        .onAppear {
+            // 自动登录：有保存的密码则直接登录，不显示登录页
+            if !api.loggedIn && !autoLoginAttempted {
+                autoLoginAttempted = true
+                if let saved = Keychain.load(), !saved.isEmpty {
+                    Task {
+                        try? await api.login(password: saved)
+                        // 登录失败则回到登录页
+                        if !api.loggedIn {
+                            autoLoginAttempted = false
+                        }
+                    }
+                } else {
+                    autoLoginAttempted = false
+                }
+            }
+        }
     }
 }
