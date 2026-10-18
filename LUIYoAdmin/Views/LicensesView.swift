@@ -43,7 +43,7 @@ struct LicensesView: View {
                             }
                             if let code = lic.code, !code.isEmpty {
                                 HStack {
-                                    Text(code).font(.caption).fontDesign(.monospaced).textSelection(.enabled)
+                                    Text(code).font(.system(.caption, design: .monospaced)).textSelection(.enabled)
                                     Spacer()
                                     Button { UIPasteboard.general.string = code } label: {
                                         Image(systemName: "doc.on.doc").font(.caption)
