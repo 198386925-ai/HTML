@@ -136,12 +136,17 @@ enum FontImporter {
         return cgFont.postScriptName as String?
     }
 
+    /// 支持的字体格式
+    static let supportedExtensions = ["ttf", "otf", "ttc", "otc"]
+
+    static func isFontFile(_ url: URL) -> Bool {
+        return supportedExtensions.contains(url.pathExtension.lowercased())
+    }
+
     static func registerAll(names: [String]) {
-        // names 是 PostScript 名称，需要找到对应的文件
-        // 简化：遍历 Fonts 目录，注册所有 ttf
         let dir = fontsDirectory()
         guard let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { return }
-        for file in files where file.pathExtension.lowercased() == "ttf" {
+        for file in files where isFontFile(file) {
             _ = registerFont(at: file)
         }
     }
@@ -150,7 +155,7 @@ enum FontImporter {
         // 找到并删除字体文件，取消注册
         let dir = fontsDirectory()
         guard let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { return }
-        for file in files where file.pathExtension.lowercased() == "ttf" {
+        for file in files where isFontFile(file) {
             if let data = try? Data(contentsOf: file),
                let provider = CGDataProvider(data: data as CFData),
                let cgFont = CGFont(provider),
@@ -166,7 +171,8 @@ enum FontImporter {
         var names: [String] = []
         let dir = fontsDirectory()
         guard let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { return [] }
-        for file in files where file.pathExtension.lowercased() == "ttf" {
+        for file in files where isFontFile(file) {
+            // ttc/otc 可能包含多个字体，尝试读取第一个
             if let data = try? Data(contentsOf: file),
                let provider = CGDataProvider(data: data as CFData),
                let cgFont = CGFont(provider),
