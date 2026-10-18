@@ -117,20 +117,23 @@ class AppDisplaySettings: ObservableObject {
         guard let name = customFontName else {
             return .system(style)
         }
-        // TextStyle 是 struct，用映射表取字号
+        // TextStyle 转字符串比较（struct 不支持 ==）
+        let key = String(describing: style)
         let size: CGFloat
-        if style == .largeTitle { size = 34 }
-        else if style == .title { size = 28 }
-        else if style == .title2 { size = 22 }
-        else if style == .title3 { size = 20 }
-        else if style == .headline { size = 17 }
-        else if style == .body { size = 17 }
-        else if style == .callout { size = 16 }
-        else if style == .subheadline { size = 15 }
-        else if style == .footnote { size = 13 }
-        else if style == .caption { size = 12 }
-        else if style == .caption2 { size = 11 }
-        else { size = 17 }
+        switch key {
+        case "largeTitle": size = 34
+        case "title": size = 28
+        case "title2": size = 22
+        case "title3": size = 20
+        case "headline": size = 17
+        case "body": size = 17
+        case "callout": size = 16
+        case "subheadline": size = 15
+        case "footnote": size = 13
+        case "caption": size = 12
+        case "caption2": size = 11
+        default: size = 17
+        }
         return .custom(name, size: size, relativeTo: style)
     }
 }
