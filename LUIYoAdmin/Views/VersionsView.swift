@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 版本控制：设计三风格（深紫底 + 白色圆卡）
+/// 版本控制：设计三风格（紫底白卡）
 struct VersionsView: View {
     @EnvironmentObject var api: AdminAPI
     @State private var list: [AppVersion] = []
@@ -15,34 +15,19 @@ struct VersionsView: View {
     private let purple = Color(red: 0.29, green: 0.23, blue: 1.0)
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // 标题
-                HStack {
-                    Text("版本")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.white)
-                    Spacer()
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-
-                // 登记卡片
-                VStack(alignment: .leading, spacing: 12) {
+        NavigationView {
+            List {
+                Section {
                     Text("登记 / 禁用版本")
                         .font(.headline)
                         .foregroundColor(.primary)
                     Text("客户端联网后会自动同步版本号到本页。新版本出现后可直接禁用或恢复；禁用后所有该版本 App 无法使用并提示下载正版。也可手动补登记。")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-
+                        .font(.caption).foregroundColor(.secondary)
                     PurpleField(label: "版本号", placeholder: "例如 1.0.5", text: $version)
                     PurpleField(label: "提示文案", placeholder: "请下载正版使用", text: $message)
                     PurpleField(label: "原因", placeholder: "可选", text: $note)
-
                     Toggle("立即禁用此版本", isOn: $blockNow)
                         .tint(purple)
-
                     Button {
                         doOp(op: blockNow ? "block" : "add")
                     } label: {
@@ -50,41 +35,39 @@ struct VersionsView: View {
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
+                            .padding(.vertical, 10)
                             .background(purple)
-                            .cornerRadius(16)
+                            .cornerRadius(14)
                     }
                     .disabled(busy || version.isEmpty)
                     .opacity(busy || version.isEmpty ? 0.5 : 1.0)
-
+                    .buttonStyle(.plain)
                     if let e = error {
                         Text(e).foregroundColor(.red).font(.footnote)
                     }
                 }
-                .padding(20)
-                .background(Color.white)
-                .cornerRadius(24)
-                .padding(.horizontal, 16)
+                .listRowBackground(Color.white)
+                .listRowSeparator(.hidden)
 
-                // 已登记版本
-                VStack(alignment: .leading, spacing: 12) {
+                Section {
                     Text("已登记版本")
                         .font(.headline)
-                        .foregroundColor(.primary)
-
+                        .listRowBackground(Color.white)
+                        .listRowSeparator(.hidden)
                     if loading && list.isEmpty {
                         ProgressView()
-                            .frame(maxWidth: .infinity)
+                            .listRowBackground(Color.white)
+                            .listRowSeparator(.hidden)
                     } else if list.isEmpty {
                         Text("暂无记录。请先添加需要管控的旧版本号。")
-                            .foregroundColor(.secondary)
-                            .font(.footnote)
+                            .foregroundColor(.secondary).font(.footnote)
+                            .listRowBackground(Color.white)
+                            .listRowSeparator(.hidden)
                     } else {
                         ForEach(list) { v in
                             VStack(alignment: .leading, spacing: 6) {
                                 HStack {
-                                    Text(v.version)
-                                        .font(.system(.headline, design: .monospaced))
+                                    Text(v.version).font(.system(.headline, design: .monospaced))
                                     Spacer()
                                     Text(v.blocked ? "已禁用" : "允许")
                                         .font(.caption).bold()
@@ -94,16 +77,12 @@ struct VersionsView: View {
                                         .cornerRadius(10)
                                 }
                                 if !v.message.isEmpty {
-                                    Text("提示：" + v.message)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                                    Text("提示：" + v.message).font(.caption).foregroundColor(.secondary)
                                 }
                                 if !v.note.isEmpty {
-                                    Text("原因：" + v.note)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
+                                    Text("原因：" + v.note).font(.caption).foregroundColor(.secondary)
                                 }
-                                HStack(spacing: 8) {
+                                HStack(spacing: 12) {
                                     Spacer()
                                     Button("编辑") {
                                         version = v.version
@@ -111,38 +90,42 @@ struct VersionsView: View {
                                         note = v.note
                                         blockNow = v.blocked
                                     }
-                                    .font(.caption)
-                                    .foregroundColor(purple)
+                                    .font(.caption).foregroundColor(purple)
                                     if v.blocked {
                                         Button("恢复") { opOnList(op: "unblock", version: v.version) }
-                                            .font(.caption)
-                                            .foregroundColor(.green)
+                                            .font(.caption).foregroundColor(.green)
                                     } else {
                                         Button("禁用") { opOnList(op: "block", version: v.version) }
-                                            .font(.caption)
-                                            .foregroundColor(.orange)
+                                            .font(.caption).foregroundColor(.orange)
                                     }
                                     Button("删除") { opOnList(op: "delete", version: v.version) }
-                                        .font(.caption)
-                                        .foregroundColor(.red)
+                                        .font(.caption).foregroundColor(.red)
                                 }
                             }
-                            .padding(12)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(16)
+                            .padding(4)
+                            .listRowBackground(Color.white)
+                            .listRowSeparator(.hidden)
+                            .swipeActions(edge: .trailing) {
+                                Button("编辑") {
+                                    version = v.version
+                                    message = v.message
+                                    note = v.note
+                                    blockNow = v.blocked
+                                }.tint(.blue)
+                            }
                         }
                     }
                 }
-                .padding(20)
-                .background(Color.white)
-                .cornerRadius(24)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 20)
+                .listRowBackground(Color.white)
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(purple.opacity(0.08))
+            .navigationTitle("版本")
+            .navigationBarTitleDisplayMode(.inline)
+            .refreshable { await reload() }
+            .task { await reload() }
         }
-        .background(purple.ignoresSafeArea())
-        .refreshable { await reload() }
-        .task { await reload() }
     }
 
     private func doOp(op: String) {
@@ -150,14 +133,11 @@ struct VersionsView: View {
         error = nil
         Task {
             do {
-                try await api.versionAction(op: op, version: version,
-                                            note: note, message: message)
+                try await api.versionAction(op: op, version: version, note: note, message: message)
                 version = ""
                 note = ""
                 await reload()
-            } catch {
-                self.error = error.localizedDescription
-            }
+            } catch { self.error = error.localizedDescription }
             busy = false
         }
     }
@@ -167,9 +147,7 @@ struct VersionsView: View {
             do {
                 try await api.versionAction(op: op, version: version)
                 await reload()
-            } catch {
-                self.error = error.localizedDescription
-            }
+            } catch { self.error = error.localizedDescription }
         }
     }
 
@@ -181,23 +159,20 @@ struct VersionsView: View {
     }
 }
 
-/// 设计三风格输入框
 struct PurpleField: View {
     let label: String
     let placeholder: String
     @Binding var text: String
-
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(label)
-                .font(.subheadline)
-                .foregroundColor(.primary)
+            Text(label).font(.subheadline)
             TextField(placeholder, text: $text)
-                .padding(12)
+                .padding(10)
                 .background(Color(.systemGray6))
-                .cornerRadius(12)
+                .cornerRadius(10)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
         }
+        .padding(.vertical, 2)
     }
 }
