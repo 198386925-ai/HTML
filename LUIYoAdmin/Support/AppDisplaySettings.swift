@@ -40,6 +40,35 @@ class AppDisplaySettings: ObservableObject {
         UserDefaults.standard.set(importedFonts, forKey: importedFontsKey)
     }
 
+    func useSystemFont() {
+        customFontName = nil
+    }
+
+    func useFont(_ psName: String) {
+        customFontName = psName
+    }
+
+    func deleteFont(_ psName: String) {
+        FontImporter.deleteFont(named: psName)
+        importedFonts.removeAll { $0 == psName }
+        if customFontName == psName {
+            customFontName = nil
+        }
+        // 刷新已导入列表
+        importedFonts = FontImporter.listImportedFonts()
+    }
+
+    @discardableResult
+    func importFont(from url: URL) -> String? {
+        guard let psName = FontImporter.importFont(from: url) else { return nil }
+        if !importedFonts.contains(psName) {
+            importedFonts.append(psName)
+        }
+        // 刷新列表确保一致
+        importedFonts = FontImporter.listImportedFonts()
+        return psName
+    }
+
     var sizeCategory: ContentSizeCategory {
         switch fontSize {
         case .small: return .small
