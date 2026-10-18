@@ -148,7 +148,7 @@ struct SettingsView: View {
                     if let name = name {
                         importMessage = "导入成功: \(name)"
                     } else {
-                        importMessage = "导入失败: \(error ?? "未知错误")"
+                        importMessage = "导入失败: \(error ?? \"未知错误\")"
                     }
                     showImportAlert = true
                 }
