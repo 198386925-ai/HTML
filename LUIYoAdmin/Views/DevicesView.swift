@@ -20,6 +20,8 @@ struct DevicesView: View {
     @State private var newCode = ""
     @State private var confirmGrant: (DeviceInfo, Bool)?
     @State private var refreshTimer: Timer?
+    @State private var prefs = DeviceDisplayPrefs.load()
+    @State private var showDisplaySettings = false
 
     let filters = [("all", "全部设备"), ("online", "在线设备"),
                    ("licensed", "已授权"), ("unlicensed", "未授权")]
@@ -91,60 +93,111 @@ struct DevicesView: View {
                 // 设备卡片列表
                 Section(header: Text("显示 \(filtered.count) 台 · 设备 \(list.count) 台（安装记录 \(installationTotal) 条）")) {
                     ForEach(filtered) { d in
-                        VStack(alignment: .leading, spacing: 5) {
-                            // 标题行：设备码 + 状态·备注 + 在线 + 页面
+                        if prefs.compact {
+                            // 紧凑：一行
                             HStack {
-                                Text(d.deviceCode)
-                                    .font(.system(.headline, design: .monospaced))
+                                if prefs.showDeviceCode {
+                                    Text(d.deviceCode)
+                                        .font(.system(.subheadline, design: .monospaced))
+                                        .fontWeight(.semibold)
+                                }
+                                if prefs.showStatus {
+                                    Text(d.status).font(.caption).foregroundColor(statusColor(d.status))
+                                }
+                                if prefs.showLicense, let l = d.label, !l.isEmpty {
+                                    Text(l).font(.caption).foregroundColor(.secondary)
+                                }
                                 Spacer()
-                                Text(d.online ? "● 在线" : "离线")
-                                    .font(.caption)
-                                    .foregroundColor(d.online ? .green : .secondary)
-                                Text(d.pageName)
-                                    .font(.caption).foregroundColor(.secondary)
-                            }
-                            HStack {
-                                Text(d.status + (d.label.map { " · " + $0 } ?? ""))
-                                    .font(.caption)
-                                    .foregroundColor(statusColor(d.status))
-                                Spacer()
-                            }
-                            // meta：机型 / iOS x / App x
-                            if !d.metaText.isEmpty {
-                                Text(d.metaText)
-                                    .font(.caption).foregroundColor(.secondary)
-                            }
-                            // 最近使用
-                            Text("活跃 " + d.lastSeenText)
-                                .font(.caption).foregroundColor(.secondary)
-                            // 首次登记 + 安装记录（网页版 tooltip 内容）
-                            HStack {
-                                Text("首次登记 " + d.createdAtText)
-                                if d.installationCount > 1 {
-                                    Text("· 安装记录 " + d.installationCodes.joined(separator: "、"))
+                                if prefs.showOnline {
+                                    Text(d.online ? "●" : "○").font(.caption)
+                                        .foregroundColor(d.online ? .green : .secondary)
+                                }
+                                if prefs.showActions {
+                                    Menu {
+                                        Button(d.activeGrant > 0 ? "取消授权" : "添加授权") {
+                                            confirmGrant = (d, d.activeGrant > 0)
+                                        }
+                                        Button("修改设备") {
+                                            modifyTarget = d
+                                            newCode = d.deviceCode
+                                        }
+                                    } label: {
+                                        Image(systemName: "ellipsis.circle").foregroundColor(.secondary)
+                                    }
                                 }
                             }
-                            .font(.caption2).foregroundColor(.secondary)
-                            // 操作：取消授权/添加授权 + 修改设备
-                            HStack {
-                                Spacer()
-                                if d.activeGrant > 0 {
-                                    Button("取消授权") { confirmGrant = (d, true) }
+                            .padding(.vertical, 2)
+                        } else {
+                            // 详细：完整卡片
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack {
+                                    if prefs.showDeviceCode {
+                                        Text(d.deviceCode)
+                                            .font(.system(.headline, design: .monospaced))
+                                    }
+                                    Spacer()
+                                    if prefs.showOnline {
+                                        Text(d.online ? "● 在线" : "离线")
+                                            .font(.caption)
+                                            .foregroundColor(d.online ? .green : .secondary)
+                                    }
+                                    if prefs.showPage {
+                                        Text(d.pageName)
+                                            .font(.caption).foregroundColor(.secondary)
+                                    }
+                                }
+                                if prefs.showStatus || prefs.showLicense {
+                                    HStack {
+                                        var t = ""
+                                        if prefs.showStatus { t += d.status }
+                                        if prefs.showLicense, let l = d.label, !l.isEmpty {
+                                            t += (t.isEmpty ? "" : " · ") + l
+                                        }
+                                        Text(t)
+                                            .font(.caption)
+                                            .foregroundColor(statusColor(d.status))
+                                        Spacer()
+                                    }
+                                }
+                                if prefs.showMeta && !d.metaText.isEmpty {
+                                    Text(d.metaText)
+                                        .font(.caption).foregroundColor(.secondary)
+                                }
+                                if prefs.showLastSeen {
+                                    Text("活跃 " + d.lastSeenText)
+                                        .font(.caption).foregroundColor(.secondary)
+                                }
+                                if prefs.showCreated {
+                                    HStack {
+                                        Text("首次登记 " + d.createdAtText)
+                                        if d.installationCount > 1 {
+                                            Text("· 安装记录 " + d.installationCodes.joined(separator: "、"))
+                                        }
+                                    }
+                                    .font(.caption2).foregroundColor(.secondary)
+                                }
+                                if prefs.showActions {
+                                    HStack {
+                                        Spacer()
+                                        if d.activeGrant > 0 {
+                                            Button("取消授权") { confirmGrant = (d, true) }
+                                                .buttonStyle(.bordered)
+                                                .tint(.red)
+                                        } else {
+                                            Button("添加授权") { confirmGrant = (d, false) }
+                                                .buttonStyle(.borderedProminent)
+                                        }
+                                        Button("修改设备") {
+                                            modifyTarget = d
+                                            newCode = d.deviceCode
+                                        }
                                         .buttonStyle(.bordered)
-                                        .tint(.red)
-                                } else {
-                                    Button("添加授权") { confirmGrant = (d, false) }
-                                        .buttonStyle(.borderedProminent)
+                                    }
+                                    .font(.subheadline)
                                 }
-                                Button("修改设备") {
-                                    modifyTarget = d
-                                    newCode = d.deviceCode
-                                }
-                                .buttonStyle(.bordered)
                             }
-                            .font(.subheadline)
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
                     }
                 }
 
@@ -180,6 +233,18 @@ struct DevicesView: View {
             .navigationTitle("设备")
             .searchable(text: $query, prompt: "搜索设备码或备注")
             .refreshable { await reload() }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showDisplaySettings = true
+                    } label: {
+                        Image(systemName: "slider.horizontal.3")
+                    }
+                }
+            }
+            .sheet(isPresented: $showDisplaySettings) {
+                DeviceDisplaySettingsView(prefs: $prefs)
+            }
             .task {
                 await reload()
                 startAutoRefresh()

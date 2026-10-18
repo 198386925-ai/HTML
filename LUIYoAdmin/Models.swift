@@ -185,6 +185,37 @@ struct SimpleResp: Decodable {
     let error: String?
 }
 
+// MARK: - 设备显示格式偏好（用户自定义）
+struct DeviceDisplayPrefs: Codable {
+    /// 卡片样式：true=紧凑， false=详细
+    var compact: Bool = false
+    var showDeviceCode: Bool = true  // 设备码
+    var showLicense: Bool = true     // 卡密信息（备注/授权来源）
+    var showStatus: Bool = true      // 状态（已授权/未授权/已封禁…）
+    var showOnline: Bool = true      // ●在线/离线
+    var showPage: Bool = true        // 当前页面（首页/规则/设置）
+    var showMeta: Bool = true        // 设备信息（机型/iOS/App版本）
+    var showLastSeen: Bool = true    // 活跃时间
+    var showCreated: Bool = true     // 首次登记 + 安装记录
+    var showActions: Bool = true     // 操作按钮（授权/修改设备）
+
+    static let key = "deviceDisplayPrefs"
+
+    static func load() -> DeviceDisplayPrefs {
+        if let d = UserDefaults.standard.data(forKey: key),
+           let p = try? JSONDecoder().decode(DeviceDisplayPrefs.self, from: d) {
+            return p
+        }
+        return DeviceDisplayPrefs()
+    }
+
+    func save() {
+        if let d = try? JSONEncoder().encode(self) {
+            UserDefaults.standard.set(d, forKey: Self.key)
+        }
+    }
+}
+
 // MARK: - 原有授权设备（devices 表，最近 200 条）
 struct LegacyDevice: Decodable, Identifiable {
     let id: Int
