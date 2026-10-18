@@ -62,7 +62,10 @@ class AppDisplaySettings: ObservableObject {
     func importFontDetailed(from url: URL) -> (String?, String?) {
         let (psName, error) = FontImporter.importFontDetailed(from: url)
         if let psName = psName {
-            importedFonts = FontImporter.listImportedFonts()
+            // 直接追加，不依赖重新扫描（大字体文件扫描可能失败）
+            if !importedFonts.contains(psName) {
+                importedFonts.append(psName)
+            }
             return (psName, nil)
         }
         return (nil, error)
