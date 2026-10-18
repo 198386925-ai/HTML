@@ -207,6 +207,7 @@ struct LabeledField: View {
                 .keyboardType(kbType)
         }
         .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
     }
 
     func keyboardType(_ t: UIKeyboardType) -> LabeledField {
