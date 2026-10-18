@@ -16,31 +16,31 @@ struct ContentView: View {
                 TabView(selection: $tab) {
                     OverviewView(tab: $tab)
                         .tabItem {
-                            Image("TabOverview").resizable().scaledToFit().frame(width: 28, height: 28)
+                            Image("TabOverview")
                             Text("总览")
                         }
                         .tag(AdminTab.overview)
                     CodesView()
                         .tabItem {
-                            Image("TabGenerate").resizable().scaledToFit().frame(width: 28, height: 28)
+                            Image("TabGenerate")
                             Text("生成")
                         }
                         .tag(AdminTab.codes)
                     DevicesView()
                         .tabItem {
-                            Image("TabDevices").resizable().scaledToFit().frame(width: 28, height: 28)
+                            Image("TabDevices")
                             Text("设备")
                         }
                         .tag(AdminTab.devices)
                     LicensesView()
                         .tabItem {
-                            Image("TabLicenses").resizable().scaledToFit().frame(width: 28, height: 28)
+                            Image("TabLicenses")
                             Text("卡密")
                         }
                         .tag(AdminTab.licenses)
                     VersionsView()
                         .tabItem {
-                            Image("TabVersions").resizable().scaledToFit().frame(width: 28, height: 28)
+                            Image("TabVersions")
                             Text("版本")
                         }
                         .tag(AdminTab.versions)
