@@ -279,6 +279,12 @@ class FontHook {
             original: #selector(UIFont.italicSystemFont(ofSize:)),
             swizzled: #selector(UIFont.fh_italicSystemFont(ofSize:))
         )
+        // Hook UIFont.preferredFont(forTextStyle:) - SwiftUI .font(.headline) 等走这里
+        swizzle(
+            cls: UIFont.self,
+            original: #selector(UIFont.preferredFont(forTextStyle:)),
+            swizzled: #selector(UIFont.fh_preferredFont(forTextStyle:))
+        )
     }
 
     private func swizzle(cls: AnyClass, original: Selector, swizzled: Selector) {
@@ -319,6 +325,16 @@ extension UIFont {
     @objc dynamic class func fh_italicSystemFont(ofSize size: CGFloat) -> UIFont {
         let original = fh_italicSystemFont(ofSize: size)
         return FontHook.shared.replacedFont(for: original)
+    }
+    
+    @objc dynamic class func fh_preferredFont(forTextStyle style: UIFont.TextStyle) -> UIFont {
+        let original = fh_preferredFont(forTextStyle: style)
+        guard let customName = FontHook.shared.activeFontName else { return original }
+        let size = original.pointSize
+        if let custom = UIFont(name: customName, size: size) {
+            return custom
+        }
+        return original
     }
 }
 

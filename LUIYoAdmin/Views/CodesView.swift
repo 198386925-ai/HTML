@@ -191,34 +191,22 @@ struct LabeledField: View {
     var kbType: UIKeyboardType = .default
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 3) {
                 Text(label).font(.subheadline)
                 if let h = hint {
                     Text(h).font(.caption).foregroundColor(.secondary)
                 }
             }
-            glassTextField
-        }
-        .padding(.vertical, 1)
-        .listRowSeparator(.hidden)
-    }
-
-    /// iOS 26+ 原生液态玻璃输入框；低版本用系统圆角边框（均为原生，不自绘）
-    @ViewBuilder
-    private var glassTextField: some View {
-        if #available(iOS 26, *) {
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
-                .keyboardType(kbType)
-        } else {
-            TextField(placeholder, text: $text)
-                .textFieldStyle(.roundedBorder)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color(.systemGray6))
+                .cornerRadius(20)
                 .keyboardType(kbType)
         }
+        .listRowSeparator(.hidden)
     }
 
     func keyboardType(_ t: UIKeyboardType) -> LabeledField {
