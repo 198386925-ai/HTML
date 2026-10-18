@@ -192,7 +192,7 @@ struct LabeledField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
+            HStack(spacing: 3) {
                 Text(label).font(.subheadline)
                 if let h = hint {
                     Text(h).font(.caption).foregroundColor(.secondary)

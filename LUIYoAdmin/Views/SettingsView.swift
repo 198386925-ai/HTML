@@ -76,6 +76,18 @@ struct SettingsView: View {
                     } label: {
                         Label("导入字体", systemImage: "square.and.arrow.down")
                     }
+                    Button {
+                        let found = FontImporter.scanDocuments()
+                        for name in found {
+                            if !display.importedFonts.contains(name) {
+                                display.importedFonts.append(name)
+                            }
+                        }
+                        importMessage = found.isEmpty ? "文档目录没有找到字体文件" : "找到 \(found.count) 个字体"
+                        showImportAlert = true
+                    } label: {
+                        Label("扫描文档目录", systemImage: "magnifyingglass")
+                    }
 
                     if let e = importError {
                         Text(e).font(.caption).foregroundColor(.red)
