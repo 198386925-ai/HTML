@@ -31,10 +31,10 @@ class AppDisplaySettings: ObservableObject {
         self.importedFonts = UserDefaults.standard.stringArray(forKey: importedFontsKey) ?? []
         // 注册已导入的字体
         FontImporter.registerAll(names: self.importedFonts)
-        // 恢复 FontHook
-        if let cf = self.customFontName {
-            FontHook.shared.setCustomFont(cf)
-        }
+        // FontHook 暂时禁用
+        // if let cf = self.customFontName {
+        //     FontHook.shared.setCustomFont(cf)
+        // }
     }
 
     func save() {
@@ -46,12 +46,12 @@ class AppDisplaySettings: ObservableObject {
 
     func useSystemFont() {
         customFontName = nil
-        FontHook.shared.setCustomFont(nil)
+        // FontHook.shared.setCustomFont(nil)
     }
 
     func useFont(_ psName: String) {
         customFontName = psName
-        FontHook.shared.setCustomFont(psName)
+        // FontHook.shared.setCustomFont(psName)
     }
 
     func deleteFont(_ psName: String) {
@@ -59,7 +59,7 @@ class AppDisplaySettings: ObservableObject {
         importedFonts.removeAll { $0 == psName }
         if customFontName == psName {
             customFontName = nil
-            FontHook.shared.setCustomFont(nil)
+            // FontHook.shared.setCustomFont(nil)
         }
         // 刷新已导入列表
         importedFonts = FontImporter.listImportedFonts()
