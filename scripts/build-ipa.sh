@@ -13,7 +13,7 @@ xcodebuild \
   -scheme LUIYoAdmin -configuration Release \
   -sdk iphoneos -destination 'generic/platform=iOS' \
   -derivedDataPath build \
-  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon build
 
 APP="build/Build/Products/Release-iphoneos/${APP_NAME}.app"
 test -f "$APP/$APP_NAME"
