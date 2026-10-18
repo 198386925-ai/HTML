@@ -31,7 +31,7 @@ struct LicensesView: View {
                         VStack(alignment: .leading, spacing: 5) {
                             // 标题：卡密 #id · 设备码 D-xxx、D-xxx
                             HStack {
-                                Text("#\(lic.id)" + (lic.deviceCodes.isEmpty ? "" : " · 设备码 " + lic.deviceCodes.joined(separator: "、")))
+                                Text("#\(lic.id)" + (lic.deviceCount > 0 && !lic.deviceCodes.isEmpty ? " · 设备码 " + lic.deviceCodes.joined(separator: "、") : ""))
                                     .font(.headline)
                                 Spacer()
                                 Text(lic.statusText)

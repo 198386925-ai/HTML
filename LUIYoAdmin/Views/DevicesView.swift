@@ -5,6 +5,7 @@ import SwiftUI
 /// + 原有授权设备管理（封禁/解封）
 struct DevicesView: View {
     @EnvironmentObject var api: AdminAPI
+    @EnvironmentObject var display: AppDisplaySettings
     @State private var list: [DeviceInfo] = []
     @State private var installationTotal = 0
     @State private var loading = false
@@ -126,10 +127,10 @@ struct DevicesView: View {
                                     }
                                 }
                             }
-                            .padding(.vertical, templateStore.active.density.cardPadding)
+                            .padding(.vertical, display.density.cardPadding)
                         } else {
                             // 详细：完整卡片
-                            VStack(alignment: .leading, spacing: templateStore.active.density.vSpacing) {
+                            VStack(alignment: .leading, spacing: display.density.vSpacing) {
                                 HStack {
                                     if templateStore.active.has(.deviceCode) {
                                         Text(d.deviceCode)
@@ -158,40 +159,47 @@ struct DevicesView: View {
                                     Text(d.metaText)
                                         .font(.caption).foregroundColor(.secondary)
                                 }
-                                if templateStore.active.has(.lastSeen) {
-                                    Text("活跃 " + d.lastSeenText)
-                                        .font(.caption).foregroundColor(.secondary)
-                                }
-                                if templateStore.active.has(.created) {
-                                    HStack {
-                                        Text("首次登记 " + d.createdAtText)
-                                        if d.installationCount > 1 {
-                                            Text("· 安装记录 " + d.installationCodes.joined(separator: "、"))
+                                if templateStore.active.has(.created) || templateStore.active.has(.actions) {
+                                    HStack(alignment: .bottom) {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            if templateStore.active.has(.lastSeen) {
+                                                Text("活跃 " + d.lastSeenText)
+                                                    .font(.caption).foregroundColor(.secondary)
+                                            }
+                                            if templateStore.active.has(.created) {
+                                                HStack {
+                                                    Text("首次登记 " + d.createdAtText)
+                                                    if d.installationCount > 1 {
+                                                        Text("· 安装记录 " + d.installationCodes.joined(separator: "、"))
+                                                    }
+                                                }
+                                                .font(.caption2).foregroundColor(.secondary)
+                                            }
                                         }
-                                    }
-                                    .font(.caption2).foregroundColor(.secondary)
-                                }
-                                if templateStore.active.has(.actions) {
-                                    HStack {
                                         Spacer()
-                                        if d.activeGrant > 0 {
-                                            Button("取消授权") { confirmGrant = (d, true) }
+                                        if templateStore.active.has(.actions) {
+                                            HStack(spacing: 8) {
+                                                if d.activeGrant > 0 {
+                                                    Button("取消授权") { confirmGrant = (d, true) }
+                                                        .buttonStyle(.bordered)
+                                                        .tint(.red)
+                                                } else {
+                                                    Button("添加授权") { confirmGrant = (d, false) }
+                                                        .buttonStyle(.borderedProminent)
+                                                }
+                                                Button("修改设备") {
+                                                    modifyTarget = d
+                                                    newCode = d.deviceCode
+                                                }
                                                 .buttonStyle(.bordered)
-                                                .tint(.red)
-                                        } else {
-                                            Button("添加授权") { confirmGrant = (d, false) }
-                                                .buttonStyle(.borderedProminent)
+                                            }
+                                            .font(.subheadline)
                                         }
-                                        Button("修改设备") {
-                                            modifyTarget = d
-                                            newCode = d.deviceCode
-                                        }
-                                        .buttonStyle(.bordered)
                                     }
-                                    .font(.subheadline)
                                 }
+
                             }
-                            .padding(.vertical, templateStore.active.density.cardPadding)
+                            .padding(.vertical, display.density.cardPadding)
                         }
                     }
                 }
@@ -308,7 +316,7 @@ struct DevicesView: View {
 
     /// 模板字体大小 -> 系统字号
     private var templateSizeCategory: ContentSizeCategory {
-        switch templateStore.active.fontSize {
+        switch display.fontSize {
         case .small: return .small
         case .standard: return .medium
         case .large: return .large

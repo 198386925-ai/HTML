@@ -7,6 +7,7 @@ enum AdminTab: Int {
 
 struct ContentView: View {
     @EnvironmentObject var api: AdminAPI
+    @EnvironmentObject var display: AppDisplaySettings
     @State private var tab: AdminTab = .overview
 
     var body: some View {
@@ -15,38 +16,40 @@ struct ContentView: View {
                 TabView(selection: $tab) {
                     OverviewView(tab: $tab)
                         .tabItem {
-                            Image(systemName: "chart.bar")
+                            Image("TabOverview")
                             Text("总览")
                         }
                         .tag(AdminTab.overview)
                     CodesView()
                         .tabItem {
-                            Image(systemName: "plus.app")
+                            Image("TabGenerate")
                             Text("生成")
                         }
                         .tag(AdminTab.codes)
                     DevicesView()
                         .tabItem {
-                            Image(systemName: "iphone")
+                            Image("TabDevices")
                             Text("设备")
                         }
                         .tag(AdminTab.devices)
                     LicensesView()
                         .tabItem {
-                            Image(systemName: "ticket")
+                            Image("TabLicenses")
                             Text("卡密")
                         }
                         .tag(AdminTab.licenses)
                     VersionsView()
                         .tabItem {
-                            Image(systemName: "tag")
+                            Image("TabVersions")
                             Text("版本")
                         }
                         .tag(AdminTab.versions)
                 }
+                .environment(\.sizeCategory, display.sizeCategory)
             } else {
                 LoginView()
             }
         }
+        .environment(\.font, display.defaultFont)
     }
 }

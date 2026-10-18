@@ -24,26 +24,8 @@ struct DeviceTemplateEditorView: View {
                 .pickerStyle(.segmented)
             }
 
-            Section("字体大小") {
-                Picker("字体", selection: $template.fontSize) {
-                    ForEach(DeviceFontSize.allCases, id: \.self) { fs in
-                        Text(fs.title).tag(fs)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-
-            Section("布局疏密") {
-                Picker("疏密", selection: $template.density) {
-                    ForEach(DeviceDensity.allCases, id: \.self) { d in
-                        Text(d.title).tag(d)
-                    }
-                }
-                .pickerStyle(.segmented)
-            }
-
             Section(header: Text("显示字段（按住拖动排序）"),
-                    footer: Text("字体大小与布局疏密为全局设置，在「设置」中调整。")) {
+                    footer: Text("字体、字号与布局疏密为全局设置，在「设置」中调整。")) {
                 ForEach(template.fields, id: \.self) { field in
                     HStack {
                         Text(field.title)
