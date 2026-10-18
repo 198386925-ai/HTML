@@ -30,6 +30,9 @@ struct License: Decodable, Identifiable {
     let expiresAt: Int?
     let disabled: Bool
     let createdAt: Int
+    let isDeviceGrant: Bool
+    let wasDeviceGrant: Bool
+    let deviceCodes: [String]
 
     enum CodingKeys: String, CodingKey {
         case id, code, label
@@ -38,10 +41,14 @@ struct License: Decodable, Identifiable {
         case expiresAt = "expires_at"
         case disabled
         case createdAt = "created_at"
+        case isDeviceGrant = "is_device_grant"
+        case wasDeviceGrant = "was_device_grant"
+        case deviceCodes = "device_codes"
     }
 
     var statusText: String {
         if disabled { return "已停用" }
+        if wasDeviceGrant && !isDeviceGrant { return "已取消授权" }
         if let e = expiresAt, e < Int(Date().timeIntervalSince1970) { return "已过期" }
         return "正常"
     }
@@ -202,14 +209,33 @@ struct GeneratedBatch: Codable, Identifiable {
     let id: UUID
     let date: Date
     let label: String
-    let quantity: Int
+    let maxDevices: Int
+    let days: Int
     let codes: [String]
 
-    init(label: String, quantity: Int, codes: [String]) {
+    var quantity: Int { codes.count }
+
+    init(label: String, maxDevices: Int, days: Int, codes: [String]) {
         self.id = UUID()
         self.date = Date()
         self.label = label
-        self.quantity = quantity
+        self.maxDevices = maxDevices
+        self.days = days
         self.codes = codes
+    }
+
+    // 兼容旧版本记录
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = (try? c.decode(UUID.self, forKey: .id)) ?? UUID()
+        date = (try? c.decode(Date.self, forKey: .date)) ?? Date()
+        label = (try? c.decode(String.self, forKey: .label)) ?? ""
+        maxDevices = (try? c.decode(Int.self, forKey: .maxDevices)) ?? 1
+        days = (try? c.decode(Int.self, forKey: .days)) ?? 0
+        codes = (try? c.decode([String].self, forKey: .codes)) ?? []
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, date, label, maxDevices, days, codes
     }
 }

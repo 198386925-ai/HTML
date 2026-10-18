@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// 卡密管理：与网页 licenses 面板一致（激活码列表 + 搜索 + 停用/启用/删除）
+/// 卡密管理：与网页 licenses 面板一致
+/// 卡密 #id · 设备码 / 状态 / 停用·启用·授权·删除 / 明文+复制 / 备注 / 设备数 / 到期
 struct LicensesView: View {
     @EnvironmentObject var api: AdminAPI
     @State private var list: [License] = []
@@ -8,6 +9,7 @@ struct LicensesView: View {
     @State private var error: String?
     @State private var query = ""
     @State private var confirmDelete: License?
+    @State private var confirmToggle: (License, String)?
 
     var filtered: [License] {
         guard !query.isEmpty else { return list }
@@ -26,21 +28,20 @@ struct LicensesView: View {
                     ProgressView()
                 } else {
                     List(filtered) { lic in
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            // 标题：卡密 #id · 设备码 D-xxx、D-xxx
                             HStack {
-                                Text("#\(lic.id)").font(.headline)
-                                if !lic.label.isEmpty {
-                                    Text(lic.label).font(.subheadline).foregroundColor(.secondary)
-                                }
+                                Text("#\(lic.id)" + (lic.deviceCodes.isEmpty ? "" : " · 设备码 " + lic.deviceCodes.joined(separator: "、")))
+                                    .font(.headline)
                                 Spacer()
                                 Text(lic.statusText)
                                     .font(.caption)
                                     .padding(.horizontal, 8).padding(.vertical, 3)
-                                    .background(lic.statusText == "正常"
-                                        ? Color.green.opacity(0.15) : Color.red.opacity(0.15))
-                                    .foregroundColor(lic.statusText == "正常" ? .green : .red)
+                                    .background(statusBg(lic.statusText))
+                                    .foregroundColor(statusFg(lic.statusText))
                                     .cornerRadius(8)
                             }
+                            // 明文 + 复制
                             if let code = lic.code, !code.isEmpty {
                                 HStack {
                                     Text(code).font(.system(.caption, design: .monospaced)).textSelection(.enabled)
@@ -50,8 +51,18 @@ struct LicensesView: View {
                                     }
                                 }
                             } else {
-                                Text("旧卡密明文不可恢复").font(.caption).foregroundColor(.secondary)
+                                Text("历史卡密明文不可恢复").font(.caption).foregroundColor(.secondary)
                             }
+                            // 备注 + 设备码授权 badge
+                            HStack {
+                                Text("备注：" + (lic.label.isEmpty ? "未填写" : lic.label))
+                                if lic.isDeviceGrant {
+                                    Text("（设备码授权）")
+                                        .foregroundColor(.blue).bold()
+                                }
+                            }
+                            .font(.caption).foregroundColor(.secondary)
+                            // 设备数 / 到期
                             HStack {
                                 Text("设备 \(lic.deviceCount)/\(lic.maxDevices)").font(.caption)
                                 Spacer()
@@ -64,10 +75,19 @@ struct LicensesView: View {
                             .foregroundColor(.secondary)
                         }
                         .swipeActions(edge: .trailing) {
-                            if lic.disabled {
-                                Button("启用") { act(lic, op: "enable") }.tint(.green)
+                            // 设备码授权的卡密：授权/取消授权；普通卡密：停用/启用
+                            if lic.wasDeviceGrant {
+                                if lic.isDeviceGrant {
+                                    Button("取消授权") { confirmToggle = (lic, "toggle_grant") }.tint(.orange)
+                                } else {
+                                    Button("授权") { confirmToggle = (lic, "toggle_grant") }.tint(.blue)
+                                }
                             } else {
-                                Button("停用") { act(lic, op: "disable") }.tint(.orange)
+                                if lic.disabled {
+                                    Button("启用") { act(lic, op: "enable") }.tint(.green)
+                                } else {
+                                    Button("停用") { act(lic, op: "disable") }.tint(.orange)
+                                }
                             }
                             Button("删除", role: .destructive) { confirmDelete = lic }
                         }
@@ -88,7 +108,25 @@ struct LicensesView: View {
                 }
                 Button("取消", role: .cancel) { confirmDelete = nil }
             }
+            .confirmationDialog("确认", isPresented: .constant(confirmToggle != nil)) {
+                Button(confirmToggle?.1 == "toggle_grant" && confirmToggle?.0.isDeviceGrant == true ? "取消授权" : "授权") {
+                    if let (lic, op) = confirmToggle { act(lic, op: op) }
+                    confirmToggle = nil
+                }
+                Button("取消", role: .cancel) { confirmToggle = nil }
+            } message: {
+                if let (lic, _) = confirmToggle {
+                    Text("卡密 #\(lic.id)：\(lic.isDeviceGrant ? "取消设备码授权" : "恢复设备码授权")")
+                }
+            }
         }
+    }
+
+    private func statusBg(_ s: String) -> Color {
+        s == "正常" ? Color.green.opacity(0.15) : Color.red.opacity(0.15)
+    }
+    private func statusFg(_ s: String) -> Color {
+        s == "正常" ? .green : .red
     }
 
     private func reload() async {

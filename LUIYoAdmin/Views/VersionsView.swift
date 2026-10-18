@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// 版本管理：与网页 versions 面板一致（登记/禁用版本 + 已登记版本）
+/// 版本控制：与网页 versions 面板一致
+/// 登记/禁用版本（版本号/提示文案/原因/立即禁用）+ 已登记版本（版本/状态/提示/原因/操作）
 struct VersionsView: View {
     @EnvironmentObject var api: AdminAPI
     @State private var list: [AppVersion] = []
@@ -9,24 +10,26 @@ struct VersionsView: View {
     @State private var version = ""
     @State private var note = ""
     @State private var message = "请下载正版使用"
+    @State private var blockNow = true
     @State private var busy = false
 
     var body: some View {
         NavigationView {
             List {
                 Section("登记 / 禁用版本") {
-                    TextField("版本号（如 1.0.7）", text: $version)
+                    Text("客户端联网后会自动同步版本号到本页。新版本出现后可直接禁用或恢复；禁用后所有该版本 App 无法使用并提示下载正版。也可手动补登记。")
+                        .font(.caption).foregroundColor(.secondary)
+                    LabeledField(label: "版本号", placeholder: "例如 1.0.5", text: $version)
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
-                    TextField("备注（可选）", text: $note)
-                    TextField("提示信息", text: $message)
-                    HStack {
-                        Button(busy ? "处理中…" : "登记版本") { doOp(op: "add") }
-                            .disabled(busy || version.isEmpty)
-                        Button(busy ? "处理中…" : "禁用版本") { doOp(op: "block") }
-                            .disabled(busy || version.isEmpty)
-                            .tint(.orange)
+                    LabeledField(label: "提示文案", placeholder: "请下载正版使用", text: $message)
+                    LabeledField(label: "原因", placeholder: "可选", text: $note)
+                    Toggle("立即禁用此版本", isOn: $blockNow)
+                    Button(busy ? "处理中…" : "保存版本") {
+                        doOp(op: blockNow ? "block" : "add")
                     }
+                    .disabled(busy || version.isEmpty)
+                    .frame(maxWidth: .infinity)
                     if let e = error {
                         Text(e).foregroundColor(.red).font(.footnote)
                     }
@@ -36,27 +39,31 @@ struct VersionsView: View {
                     if loading && list.isEmpty {
                         ProgressView()
                     } else if list.isEmpty {
-                        Text("暂无").foregroundColor(.secondary).font(.footnote)
+                        Text("暂无记录。请先添加需要管控的旧版本号。")
+                            .foregroundColor(.secondary).font(.footnote)
                     } else {
                         ForEach(list) { v in
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack {
                                     Text(v.version).font(.system(.headline, design: .monospaced))
                                     Spacer()
-                                    Text(v.blocked ? "已禁用" : "正常")
+                                    Text(v.blocked ? "已禁用" : "允许")
                                         .font(.caption)
+                                        .padding(.horizontal, 8).padding(.vertical, 3)
+                                        .background(v.blocked ? Color.red.opacity(0.15) : Color.green.opacity(0.15))
                                         .foregroundColor(v.blocked ? .red : .green)
-                                }
-                                if !v.note.isEmpty {
-                                    Text(v.note).font(.caption).foregroundColor(.secondary)
+                                        .cornerRadius(8)
                                 }
                                 if !v.message.isEmpty {
                                     Text("提示：" + v.message).font(.caption).foregroundColor(.secondary)
                                 }
+                                if !v.note.isEmpty {
+                                    Text("原因：" + v.note).font(.caption).foregroundColor(.secondary)
+                                }
                             }
                             .swipeActions(edge: .trailing) {
                                 if v.blocked {
-                                    Button("解禁") { opOnList(op: "unblock", version: v.version) }
+                                    Button("恢复") { opOnList(op: "unblock", version: v.version) }
                                         .tint(.green)
                                 } else {
                                     Button("禁用") { opOnList(op: "block", version: v.version) }
