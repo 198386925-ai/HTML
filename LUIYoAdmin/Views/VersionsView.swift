@@ -54,11 +54,11 @@ struct VersionsView: View {
                                     Text(v.version).font(.system(.headline, design: .monospaced))
                                     Spacer()
                                     Text(v.blocked ? "已禁用" : "允许")
-                                        .font(.caption)
-                                        .padding(.horizontal, 8).padding(.vertical, 3)
-                                        .background(v.blocked ? Color.red.opacity(0.15) : Color.green.opacity(0.15))
-                                        .foregroundColor(v.blocked ? .red : .green)
-                                        .cornerRadius(8)
+                                        .font(.caption).bold()
+                                        .padding(.horizontal, 10).padding(.vertical, 4)
+                                        .background(v.blocked ? Color.red : Color.green)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(10)
                                 }
                                 if !v.message.isEmpty {
                                     Text("提示：" + v.message).font(.caption).foregroundColor(.secondary)
