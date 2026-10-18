@@ -19,7 +19,6 @@ struct DevicesView: View {
     @State private var banReason = ""
     @State private var modifyTarget: DeviceInfo?
     @State private var newCode = ""
-    @State private var confirmGrant: (DeviceInfo, Bool)?
     @State private var refreshTimer: Timer?
     @StateObject private var templateStore = DeviceTemplateStore()
     @State private var showDisplaySettings = false
@@ -116,7 +115,7 @@ struct DevicesView: View {
                                 if templateStore.active.has(.actions) {
                                     Menu {
                                         Button(d.status == "已授权" ? "取消授权" : "添加授权") {
-                                            confirmGrant = (d, d.status == "已授权")
+                                            grantOp(op: d.status == "已授权" ? "revoke" : "grant", code: d.deviceCode)
                                         }
                                         Button("修改设备") {
                                             modifyTarget = d
@@ -180,11 +179,11 @@ struct DevicesView: View {
                                         if templateStore.active.has(.actions) {
                                             HStack(spacing: 8) {
                                                 if d.status == "已授权" {
-                                                    Button("取消授权") { confirmGrant = (d, true) }
+                                                    Button("取消授权") { grantOp(op: "revoke", code: d.deviceCode) }
                                                         .buttonStyle(.bordered)
                                                         .tint(.red)
                                                 } else {
-                                                    Button("添加授权") { confirmGrant = (d, false) }
+                                                    Button("添加授权") { grantOp(op: "grant", code: d.deviceCode) }
                                                         .buttonStyle(.borderedProminent)
                                                 }
                                                 Button("修改设备") {
@@ -258,21 +257,7 @@ struct DevicesView: View {
             .alert("错误", isPresented: .constant(error != nil)) {
                 Button("好") { error = nil }
             } message: { Text(error ?? "") }
-            // 取消/添加授权确认
-            .confirmationDialog("确认", isPresented: .constant(confirmGrant != nil)) {
-                Button(confirmGrant?.1 == true ? "取消授权" : "添加授权",
-                       role: confirmGrant?.1 == true ? .destructive : .none) {
-                    if let (d, isRevoke) = confirmGrant {
-                        grantOp(op: isRevoke ? "revoke" : "grant", code: d.deviceCode)
-                    }
-                    confirmGrant = nil
-                }
-                Button("取消", role: .cancel) { confirmGrant = nil }
-            } message: {
-                if let (d, isRevoke) = confirmGrant {
-                    Text("\(isRevoke ? "取消" : "添加") \(d.deviceCode) 的设备码授权？")
-                }
-            }
+
             // 修改设备码
             .alert("修改设备码", isPresented: .constant(modifyTarget != nil)) {
                 TextField("D-000002", text: $newCode)
