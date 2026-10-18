@@ -75,6 +75,29 @@ struct DeviceInfo: Decodable, Identifiable {
         case page
     }
 
+    /// banned 在服务端可能是 Bool / Int(0/1) / null，兼容解析
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(Int.self, forKey: .id)
+        deviceCode = try c.decode(String.self, forKey: .deviceCode)
+        model = try c.decodeIfPresent(String.self, forKey: .model)
+        osVersion = try c.decodeIfPresent(String.self, forKey: .osVersion)
+        appVersion = try c.decodeIfPresent(String.self, forKey: .appVersion)
+        status = try c.decode(String.self, forKey: .status)
+        online = (try? c.decode(Bool.self, forKey: .online)) ?? false
+        lastSeen = (try? c.decode(Int.self, forKey: .lastSeen)) ?? 0
+        label = try c.decodeIfPresent(String.self, forKey: .label)
+        if let b = try? c.decode(Bool.self, forKey: .banned) {
+            banned = b
+        } else if let i = try? c.decode(Int.self, forKey: .banned) {
+            banned = i != 0
+        } else {
+            banned = false
+        }
+        installationCount = (try? c.decode(Int.self, forKey: .installationCount)) ?? 1
+        page = try c.decodeIfPresent(String.self, forKey: .page)
+    }
+
     var lastSeenText: String {
         let d = Date(timeIntervalSince1970: TimeInterval(lastSeen))
         let f = DateFormatter()
