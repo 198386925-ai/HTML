@@ -58,15 +58,20 @@ class AppDisplaySettings: ObservableObject {
         importedFonts = FontImporter.listImportedFonts()
     }
 
+    /// 导入字体，返回 (PostScript名称, 错误信息)
+    func importFontDetailed(from url: URL) -> (String?, String?) {
+        let (psName, error) = FontImporter.importFontDetailed(from: url)
+        if let psName = psName {
+            importedFonts = FontImporter.listImportedFonts()
+            return (psName, nil)
+        }
+        return (nil, error)
+    }
+
     @discardableResult
     func importFont(from url: URL) -> String? {
-        guard let psName = FontImporter.importFont(from: url) else { return nil }
-        if !importedFonts.contains(psName) {
-            importedFonts.append(psName)
-        }
-        // 刷新列表确保一致
-        importedFonts = FontImporter.listImportedFonts()
-        return psName
+        let (name, _) = importFontDetailed(from: url)
+        return name
     }
 
     var sizeCategory: ContentSizeCategory {
@@ -107,24 +112,30 @@ enum FontImporter {
     }
 
     static func importFont(from url: URL) -> String? {
-        let dest = fontsDirectory().appendingPathComponent(url.lastPathComponent)
-        // 如果已存在，先删除
+        let (name, _) = importFontDetailed(from: url)
+        return name
+    }
+
+    /// 返回 (PostScript名称, 错误信息)
+    static func importFontDetailed(from url: URL) -> (String?, String?) {
+        let fileName = url.lastPathComponent
+        guard isFontFile(url) else {
+            return (nil, "不支持的文件格式: \(url.pathExtension)")
+        }
+        let dest = fontsDirectory().appendingPathComponent(fileName)
         try? FileManager.default.removeItem(at: dest)
-        // 尝试获取安全访问权限（fileImporter 的 URL 通常是 security-scoped）
         let needsStop = url.startAccessingSecurityScopedResource()
         defer { if needsStop { url.stopAccessingSecurityScopedResource() } }
         do {
             try FileManager.default.copyItem(at: url, to: dest)
-        } catch {
-            return nil
+        } catch let e {
+            return (nil, "复制文件失败: \(e.localizedDescription)")
         }
-        // 注册字体
         guard let name = registerFont(at: dest) else {
-            // 注册失败，删除复制的文件
             try? FileManager.default.removeItem(at: dest)
-            return nil
+            return (nil, "字体注册失败，文件可能已损坏")
         }
-        return name
+        return (name, nil)
     }
 
     static func registerFont(at url: URL) -> String? {

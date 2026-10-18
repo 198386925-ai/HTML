@@ -115,8 +115,8 @@ struct DevicesView: View {
                                 }
                                 if templateStore.active.has(.actions) {
                                     Menu {
-                                        Button(d.activeGrant > 0 ? "取消授权" : "添加授权") {
-                                            confirmGrant = (d, d.activeGrant > 0)
+                                        Button(d.status == "已授权" ? "取消授权" : "添加授权") {
+                                            confirmGrant = (d, d.status == "已授权")
                                         }
                                         Button("修改设备") {
                                             modifyTarget = d
@@ -179,7 +179,7 @@ struct DevicesView: View {
                                         Spacer()
                                         if templateStore.active.has(.actions) {
                                             HStack(spacing: 8) {
-                                                if d.activeGrant > 0 {
+                                                if d.status == "已授权" {
                                                     Button("取消授权") { confirmGrant = (d, true) }
                                                         .buttonStyle(.bordered)
                                                         .tint(.red)

@@ -106,17 +106,20 @@ struct SettingsView: View {
             .onAppear { server = api.serverBase; saved = false }
             .fileImporter(
                 isPresented: $showImporter,
-                allowedContentTypes: [.font],
+                allowedContentTypes: [
+                    UTType(filenameExtension: "ttf"),
+                    UTType(filenameExtension: "otf"),
+                    UTType(filenameExtension: "ttc"),
+                    UTType(filenameExtension: "otc"),
+                    .font
+                ].compactMap { $0 },
                 allowsMultipleSelection: false
             ) { result in
                 switch result {
                 case .success(let urls):
                     if let url = urls.first {
-                        if display.importFont(from: url) == nil {
-                            importError = "导入失败，请确认是有效的字体文件"
-                        } else {
-                            importError = nil
-                        }
+                        let (_, error) = display.importFontDetailed(from: url)
+                        importError = error
                     }
                 case .failure:
                     importError = "选择文件失败"
