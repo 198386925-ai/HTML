@@ -68,6 +68,9 @@ struct DeviceInfo: Decodable, Identifiable {
     let banned: Bool
     let installationCount: Int
     let page: String?
+    let activeGrant: Int
+    let createdAt: Int
+    let installationCodes: [String]
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -80,6 +83,9 @@ struct DeviceInfo: Decodable, Identifiable {
         case label, banned
         case installationCount = "installation_count"
         case page
+        case activeGrant = "active_grant"
+        case createdAt = "created_at"
+        case installationCodes = "installation_codes"
     }
 
     /// banned 在服务端可能是 Bool / Int(0/1) / null，兼容解析
@@ -103,6 +109,36 @@ struct DeviceInfo: Decodable, Identifiable {
         }
         installationCount = (try? c.decode(Int.self, forKey: .installationCount)) ?? 1
         page = try c.decodeIfPresent(String.self, forKey: .page)
+        activeGrant = (try? c.decode(Int.self, forKey: .activeGrant)) ?? 0
+        createdAt = (try? c.decode(Int.self, forKey: .createdAt)) ?? 0
+        installationCodes = (try? c.decode([String].self, forKey: .installationCodes)) ?? []
+    }
+
+    /// 页面映射（与网页版一致）
+    var pageName: String {
+        switch page {
+        case "home": return "首页"
+        case "rules": return "规则"
+        case "settings": return "设置"
+        default: return "—"
+        }
+    }
+
+    /// meta 行：机型 / iOS x / App x（与网页版一致）
+    var metaText: String {
+        var parts: [String] = []
+        if let m = model, !m.isEmpty { parts.append(m) }
+        if let o = osVersion, !o.isEmpty { parts.append("iOS " + o) }
+        if let a = appVersion, !a.isEmpty { parts.append("App " + a) }
+        return parts.joined(separator: " / ")
+    }
+
+    var createdAtText: String {
+        guard createdAt > 0 else { return "—" }
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd HH:mm"
+        f.timeZone = TimeZone(identifier: "Asia/Shanghai")
+        return f.string(from: Date(timeIntervalSince1970: TimeInterval(createdAt)))
     }
 
     var lastSeenText: String {

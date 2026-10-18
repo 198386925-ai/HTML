@@ -111,6 +111,13 @@ class AdminAPI: ObservableObject {
         guard r.ok else { throw APIError.server(r.error ?? "操作失败") }
     }
 
+    /// 修改设备码（与网页版一致）
+    func modifyDeviceCode(deviceCode: String, newCode: String) async throws {
+        let p = ["op": "modify_device_code", "device_code": deviceCode, "new_code": newCode]
+        let r: SimpleResp = try await post(action: "device_action", params: p)
+        guard r.ok else { throw APIError.server(r.error ?? "操作失败") }
+    }
+
     func legacyDevices() async throws -> [LegacyDevice] {
         let r: LegacyDevicesResp = try await post(action: "legacy_devices", params: [:])
         guard r.ok, let list = r.devices else { throw APIError.server(r.error ?? "获取失败") }
