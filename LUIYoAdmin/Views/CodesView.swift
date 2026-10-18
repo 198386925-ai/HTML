@@ -127,6 +127,7 @@ struct CodesView: View {
                     }
                 }
             }
+            .navigationBarTitleDisplayMode(.inline)
             .navigationTitle("生成")
             .onAppear(perform: loadHistory)
         }

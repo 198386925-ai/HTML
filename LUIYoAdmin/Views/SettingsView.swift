@@ -8,6 +8,8 @@ struct SettingsView: View {
     @State private var saved = false
     @State private var showImporter = false
     @State private var importError: String?
+    @State private var importMessage: String?
+    @State private var showImportAlert = false
 
     var body: some View {
         NavigationView {
@@ -103,6 +105,11 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("设置")
+            .alert("字体导入", isPresented: $showImportAlert) {
+                Button("确定", role: .cancel) {}
+            } message: {
+                Text(importMessage ?? "")
+            }
             .onAppear { server = api.serverBase; saved = false }
             .fileImporter(
                 isPresented: $showImporter,
@@ -112,11 +119,20 @@ struct SettingsView: View {
                 switch result {
                 case .success(let urls):
                     if let url = urls.first {
-                        let (_, error) = display.importFontDetailed(from: url)
-                        importError = error
+                        let (name, error) = display.importFontDetailed(from: url)
+                        if let name = name {
+                            importMessage = "导入成功: \(name)"
+                        } else {
+                            importMessage = "导入失败: \(error ?? "未知错误")"
+                        }
+                        showImportAlert = true
+                    } else {
+                        importMessage = "未选择文件"
+                        showImportAlert = true
                     }
-                case .failure:
-                    importError = "选择文件失败"
+                case .failure(let e):
+                    importMessage = "选择文件失败: \(e.localizedDescription)"
+                    showImportAlert = true
                 }
             }
         }

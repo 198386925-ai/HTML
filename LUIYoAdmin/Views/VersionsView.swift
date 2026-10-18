@@ -91,6 +91,7 @@ struct VersionsView: View {
                     }
                 }
             }
+            .navigationBarTitleDisplayMode(.inline)
             .navigationTitle("版本")
             .refreshable { await reload() }
             .task { await reload() }
