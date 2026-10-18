@@ -16,36 +16,35 @@ struct ContentView: View {
                 TabView(selection: $tab) {
                     OverviewView(tab: $tab)
                         .tabItem {
-                            Image("TabOverview")
+                            Image("TabOverview").resizable().scaledToFit().frame(width: 28, height: 28)
                             Text("总览")
                         }
                         .tag(AdminTab.overview)
                     CodesView()
                         .tabItem {
-                            Image("TabGenerate")
+                            Image("TabGenerate").resizable().scaledToFit().frame(width: 28, height: 28)
                             Text("生成")
                         }
                         .tag(AdminTab.codes)
                     DevicesView()
                         .tabItem {
-                            Image("TabDevices")
+                            Image("TabDevices").resizable().scaledToFit().frame(width: 28, height: 28)
                             Text("设备")
                         }
                         .tag(AdminTab.devices)
                     LicensesView()
                         .tabItem {
-                            Image("TabLicenses")
+                            Image("TabLicenses").resizable().scaledToFit().frame(width: 28, height: 28)
                             Text("卡密")
                         }
                         .tag(AdminTab.licenses)
                     VersionsView()
                         .tabItem {
-                            Image("TabVersions")
+                            Image("TabVersions").resizable().scaledToFit().frame(width: 28, height: 28)
                             Text("版本")
                         }
                         .tag(AdminTab.versions)
                 }
-                .environment(\.sizeCategory, display.sizeCategory)
             } else {
                 LoginView()
             }

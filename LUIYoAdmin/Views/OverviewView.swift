@@ -170,26 +170,26 @@ struct DashboardStatCard: View {
     let color: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(.body)
                     .foregroundColor(.white)
-                    .padding(8)
+                    .padding(6)
                     .background(color)
                     .clipShape(Circle())
                 Spacer()
             }
             Text(value)
-                .font(.system(size: 28, weight: .bold))
+                .font(.system(size: 24, weight: .bold))
             Text(title)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
-        .padding(16)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.systemBackground))
-        .cornerRadius(16)
+        .cornerRadius(12)
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 }

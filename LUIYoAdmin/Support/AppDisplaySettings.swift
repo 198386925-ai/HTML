@@ -78,11 +78,22 @@ class AppDisplaySettings: ObservableObject {
         }
     }
 
+    /// 基础字号（对应字体大小设置）
+    var baseFontSize: CGFloat {
+        switch fontSize {
+        case .small: return 14
+        case .standard: return 17
+        case .large: return 20
+        case .extraLarge: return 24
+        }
+    }
+
     var defaultFont: Font {
         if let name = customFontName {
-            return .custom(name, size: 17)
+            // relativeTo 让自定义字体跟随系统动态字体缩放
+            return .custom(name, size: baseFontSize, relativeTo: .body)
         }
-        return .system(size: 17)
+        return .system(size: baseFontSize)
     }
 }
 
@@ -99,16 +110,20 @@ enum FontImporter {
         let dest = fontsDirectory().appendingPathComponent(url.lastPathComponent)
         // 如果已存在，先删除
         try? FileManager.default.removeItem(at: dest)
+        // 尝试获取安全访问权限（fileImporter 的 URL 通常是 security-scoped）
+        let needsStop = url.startAccessingSecurityScopedResource()
+        defer { if needsStop { url.stopAccessingSecurityScopedResource() } }
         do {
-            // 需要先获取安全访问权限（fileImporter 给的是 security-scoped URL）
-            guard url.startAccessingSecurityScopedResource() else { return nil }
-            defer { url.stopAccessingSecurityScopedResource() }
             try FileManager.default.copyItem(at: url, to: dest)
         } catch {
             return nil
         }
         // 注册字体
-        guard let name = registerFont(at: dest) else { return nil }
+        guard let name = registerFont(at: dest) else {
+            // 注册失败，删除复制的文件
+            try? FileManager.default.removeItem(at: dest)
+            return nil
+        }
         return name
     }
 
