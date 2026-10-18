@@ -103,6 +103,20 @@ class AdminAPI: ObservableObject {
         guard r.ok else { throw APIError.server(r.error ?? "操作失败") }
     }
 
+    /// 原有授权设备封禁/解封（按 devices.id）
+    func legacyDeviceAction(legacyId: Int, op: String, reason: String = "") async throws {
+        var p = ["legacy_id": String(legacyId), "op": op]
+        if !reason.isEmpty { p["reason"] = reason }
+        let r: SimpleResp = try await post(action: "device_action", params: p)
+        guard r.ok else { throw APIError.server(r.error ?? "操作失败") }
+    }
+
+    func legacyDevices() async throws -> [LegacyDevice] {
+        let r: LegacyDevicesResp = try await post(action: "legacy_devices", params: [:])
+        guard r.ok, let list = r.devices else { throw APIError.server(r.error ?? "获取失败") }
+        return list
+    }
+
     // MARK: - 版本管理
 
     func versions() async throws -> [AppVersion] {

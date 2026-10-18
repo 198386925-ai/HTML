@@ -14,6 +14,8 @@ struct DevicesView: View {
     @State private var banTarget: DeviceInfo?
     @State private var banReason = ""
     @State private var confirmOp: (DeviceInfo, String)?
+    @State private var legacyList: [LegacyDevice] = []
+    @State private var legacyBanTarget: LegacyDevice?
 
     let filters = [("all", "全部设备"), ("online", "在线设备"),
                    ("licensed", "已授权"), ("unlicensed", "未授权")]
@@ -108,6 +110,35 @@ struct DevicesView: View {
                         }
                     }
                 }
+
+                // 原有授权设备管理（最近 200 条）
+                Section("原有授权设备管理（\(legacyFiltered.count)）") {
+                    ForEach(legacyFiltered) { d in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(d.deviceCode ?? "未登记设备（记录 #\(d.id)）")
+                                    .font(.system(.headline, design: .monospaced))
+                                Spacer()
+                                Text(d.banned ? "已封禁" : "正常")
+                                    .font(.caption)
+                                    .foregroundColor(d.banned ? .red : .green)
+                            }
+                            HStack {
+                                Text(d.authMode)
+                                Spacer()
+                                Text("活跃 " + d.lastSeenText)
+                            }
+                            .font(.caption).foregroundColor(.secondary)
+                        }
+                        .swipeActions(edge: .trailing) {
+                            if d.banned {
+                                Button("解封") { legacyAct(d, op: "unban") }.tint(.green)
+                            } else {
+                                Button("封禁") { legacyBanTarget = d; banReason = "" }.tint(.red)
+                            }
+                        }
+                    }
+                }
             }
             .navigationTitle("设备")
             .searchable(text: $query, prompt: "搜索设备码/机型/备注")
@@ -122,6 +153,14 @@ struct DevicesView: View {
                 Button("封禁", role: .destructive) {
                     if let d = banTarget { act(d, op: "ban", reason: banReason) }
                     banTarget = nil
+                }
+            }
+            .alert("封禁设备", isPresented: .constant(legacyBanTarget != nil)) {
+                TextField("封禁原因（可选）", text: $banReason)
+                Button("取消", role: .cancel) { legacyBanTarget = nil }
+                Button("封禁", role: .destructive) {
+                    if let d = legacyBanTarget { legacyAct(d, op: "ban", reason: banReason) }
+                    legacyBanTarget = nil
                 }
             }
             .confirmationDialog("确认操作", isPresented: .constant(confirmOp != nil)) {
@@ -168,10 +207,23 @@ struct DevicesView: View {
         }
     }
 
+    var legacyFiltered: [LegacyDevice] {
+        guard !query.isEmpty else { return legacyList }
+        let q = query.lowercased()
+        return legacyList.filter {
+            ($0.deviceCode ?? "").lowercased().contains(q)
+            || $0.authMode.lowercased().contains(q)
+        }
+    }
+
     private func reload() async {
         loading = true
-        do { list = try await api.devices() }
-        catch { self.error = error.localizedDescription }
+        do {
+            async let a = api.devices()
+            async let b = api.legacyDevices()
+            list = try await a
+            legacyList = try await b
+        } catch { self.error = error.localizedDescription }
         loading = false
     }
 
@@ -180,6 +232,15 @@ struct DevicesView: View {
             do {
                 try await api.deviceAction(id: d.id, deviceCode: d.deviceCode,
                                            op: op, reason: reason)
+                await reload()
+            } catch { self.error = error.localizedDescription }
+        }
+    }
+
+    private func legacyAct(_ d: LegacyDevice, op: String, reason: String = "") {
+        Task {
+            do {
+                try await api.legacyDeviceAction(legacyId: d.id, op: op, reason: reason)
                 await reload()
             } catch { self.error = error.localizedDescription }
         }

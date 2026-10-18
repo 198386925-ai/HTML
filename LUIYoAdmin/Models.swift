@@ -142,6 +142,38 @@ struct SimpleResp: Decodable {
     let error: String?
 }
 
+// MARK: - 原有授权设备（devices 表，最近 200 条）
+struct LegacyDevice: Decodable, Identifiable {
+    let id: Int
+    let deviceCode: String?
+    let authMode: String
+    let lastSeen: Int
+    let banned: Bool
+    let banReason: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case deviceCode = "device_code"
+        case authMode = "auth_mode"
+        case lastSeen = "last_seen"
+        case banned
+        case banReason = "ban_reason"
+    }
+
+    var lastSeenText: String {
+        let d = Date(timeIntervalSince1970: TimeInterval(lastSeen))
+        let f = DateFormatter()
+        f.dateFormat = "MM-dd HH:mm"
+        return f.string(from: d)
+    }
+}
+
+struct LegacyDevicesResp: Decodable {
+    let ok: Bool
+    let error: String?
+    let devices: [LegacyDevice]?
+}
+
 struct KamiCreateResp: Decodable {
     let ok: Bool
     let error: String?
