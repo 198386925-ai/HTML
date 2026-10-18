@@ -20,7 +20,7 @@ struct DevicesView: View {
     @State private var newCode = ""
     @State private var confirmGrant: (DeviceInfo, Bool)?
     @State private var refreshTimer: Timer?
-    @State private var prefs = DeviceDisplayPrefs.load()
+    @StateObject private var templateStore = DeviceTemplateStore()
     @State private var showDisplaySettings = false
 
     let filters = [("all", "全部设备"), ("online", "在线设备"),
@@ -93,26 +93,26 @@ struct DevicesView: View {
                 // 设备卡片列表
                 Section(header: Text("显示 \(filtered.count) 台 · 设备 \(list.count) 台（安装记录 \(installationTotal) 条）")) {
                     ForEach(filtered) { d in
-                        if prefs.compact {
+                        if templateStore.active.compact {
                             // 紧凑：一行
                             HStack {
-                                if prefs.showDeviceCode {
+                                if templateStore.active.has(.deviceCode) {
                                     Text(d.deviceCode)
                                         .font(.system(.subheadline, design: .monospaced))
                                         .fontWeight(.semibold)
                                 }
-                                if prefs.showStatus {
+                                if templateStore.active.has(.status) {
                                     Text(d.status).font(.caption).foregroundColor(statusColor(d.status))
                                 }
-                                if prefs.showLicense, let l = d.label, !l.isEmpty {
+                                if templateStore.active.has(.license), let l = d.label, !l.isEmpty {
                                     Text(l).font(.caption).foregroundColor(.secondary)
                                 }
                                 Spacer()
-                                if prefs.showOnline {
+                                if templateStore.active.has(.online) {
                                     Text(d.online ? "●" : "○").font(.caption)
                                         .foregroundColor(d.online ? .green : .secondary)
                                 }
-                                if prefs.showActions {
+                                if templateStore.active.has(.actions) {
                                     Menu {
                                         Button(d.activeGrant > 0 ? "取消授权" : "添加授权") {
                                             confirmGrant = (d, d.activeGrant > 0)
@@ -131,22 +131,22 @@ struct DevicesView: View {
                             // 详细：完整卡片
                             VStack(alignment: .leading, spacing: 5) {
                                 HStack {
-                                    if prefs.showDeviceCode {
+                                    if templateStore.active.has(.deviceCode) {
                                         Text(d.deviceCode)
                                             .font(.system(.headline, design: .monospaced))
                                     }
                                     Spacer()
-                                    if prefs.showOnline {
+                                    if templateStore.active.has(.online) {
                                         Text(d.online ? "● 在线" : "离线")
                                             .font(.caption)
                                             .foregroundColor(d.online ? .green : .secondary)
                                     }
-                                    if prefs.showPage {
+                                    if templateStore.active.has(.page) {
                                         Text(d.pageName)
                                             .font(.caption).foregroundColor(.secondary)
                                     }
                                 }
-                                if prefs.showStatus || prefs.showLicense {
+                                if templateStore.active.has(.status) || templateStore.active.has(.license) {
                                     HStack {
                                         Text(statusText(for: d))
                                             .font(.caption)
@@ -154,15 +154,15 @@ struct DevicesView: View {
                                         Spacer()
                                     }
                                 }
-                                if prefs.showMeta && !d.metaText.isEmpty {
+                                if templateStore.active.has(.meta) && !d.metaText.isEmpty {
                                     Text(d.metaText)
                                         .font(.caption).foregroundColor(.secondary)
                                 }
-                                if prefs.showLastSeen {
+                                if templateStore.active.has(.lastSeen) {
                                     Text("活跃 " + d.lastSeenText)
                                         .font(.caption).foregroundColor(.secondary)
                                 }
-                                if prefs.showCreated {
+                                if templateStore.active.has(.created) {
                                     HStack {
                                         Text("首次登记 " + d.createdAtText)
                                         if d.installationCount > 1 {
@@ -171,7 +171,7 @@ struct DevicesView: View {
                                     }
                                     .font(.caption2).foregroundColor(.secondary)
                                 }
-                                if prefs.showActions {
+                                if templateStore.active.has(.actions) {
                                     HStack {
                                         Spacer()
                                         if d.activeGrant > 0 {
@@ -238,7 +238,7 @@ struct DevicesView: View {
                 }
             }
             .sheet(isPresented: $showDisplaySettings) {
-                DeviceDisplaySettingsView(prefs: $prefs)
+                DeviceDisplaySettingsView(store: templateStore)
             }
             .task {
                 await reload()
@@ -298,8 +298,8 @@ struct DevicesView: View {
     /// 状态行文本：按显示偏好组合状态 + 卡密信息
     private func statusText(for d: DeviceInfo) -> String {
         var t = ""
-        if prefs.showStatus { t += d.status }
-        if prefs.showLicense, let l = d.label, !l.isEmpty {
+        if templateStore.active.has(.status) { t += d.status }
+        if templateStore.active.has(.license), let l = d.label, !l.isEmpty {
             t += (t.isEmpty ? "" : " · ") + l
         }
         return t

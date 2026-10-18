@@ -185,35 +185,144 @@ struct SimpleResp: Decodable {
     let error: String?
 }
 
-// MARK: - 设备显示格式偏好（用户自定义）
-struct DeviceDisplayPrefs: Codable, Equatable {
-    /// 卡片样式：true=紧凑， false=详细
-    var compact: Bool = false
-    var showDeviceCode: Bool = true  // 设备码
-    var showLicense: Bool = true     // 卡密信息（备注/授权来源）
-    var showStatus: Bool = true      // 状态（已授权/未授权/已封禁…）
-    var showOnline: Bool = true      // ●在线/离线
-    var showPage: Bool = true        // 当前页面（首页/规则/设置）
-    var showMeta: Bool = true        // 设备信息（机型/iOS/App版本）
-    var showLastSeen: Bool = true    // 活跃时间
-    var showCreated: Bool = true     // 首次登记 + 安装记录
-    var showActions: Bool = true     // 操作按钮（授权/修改设备）
+// MARK: - 设备显示字段
+enum DeviceDisplayField: String, Codable, CaseIterable {
+    case deviceCode = "deviceCode"  // 设备码
+    case license = "license"        // 卡密信息
+    case status = "status"          // 状态
+    case online = "online"          // 在线状态
+    case page = "page"              // 当前页面
+    case meta = "meta"              // 设备信息（机型/系统/版本）
+    case lastSeen = "lastSeen"      // 活跃时间
+    case created = "created"        // 首次登记/安装记录
+    case actions = "actions"        // 操作按钮
 
-    static let key = "deviceDisplayPrefs"
-
-    static func load() -> DeviceDisplayPrefs {
-        if let d = UserDefaults.standard.data(forKey: key),
-           let p = try? JSONDecoder().decode(DeviceDisplayPrefs.self, from: d) {
-            return p
+    var title: String {
+        switch self {
+        case .deviceCode: return "设备码"
+        case .license: return "卡密信息"
+        case .status: return "状态"
+        case .online: return "在线状态"
+        case .page: return "当前页面"
+        case .meta: return "设备信息"
+        case .lastSeen: return "活跃时间"
+        case .created: return "首次登记"
+        case .actions: return "操作按钮"
         }
-        return DeviceDisplayPrefs()
+    }
+}
+
+// MARK: - 设备显示模板（用户可手动添加多套）
+struct DeviceDisplayTemplate: Codable, Identifiable, Equatable {
+    var id: String = UUID().uuidString
+    var name: String
+    /// true=紧凑单行，false=详细卡片
+    var compact: Bool
+    /// 按显示顺序排列的字段
+    var fields: [DeviceDisplayField]
+
+    static var `default`: DeviceDisplayTemplate {
+        DeviceDisplayTemplate(name: "详细", compact: false, fields: DeviceDisplayField.allCases)
+    }
+
+    static var compactDefault: DeviceDisplayTemplate {
+        DeviceDisplayTemplate(name: "紧凑", compact: true, fields: DeviceDisplayField.allCases)
+    }
+
+    func has(_ f: DeviceDisplayField) -> Bool { fields.contains(f) }
+}
+
+// MARK: - 模板管理器
+class DeviceTemplateStore: ObservableObject {
+    @Published var templates: [DeviceDisplayTemplate] = []
+    @Published var activeId: String = ""
+
+    static let key = "deviceDisplayTemplates"
+    static let activeKey = "deviceDisplayActiveTemplate"
+
+    init() { load() }
+
+    var active: DeviceDisplayTemplate {
+        templates.first(where: { $0.id == activeId }) ?? .default
+    }
+
+    func load() {
+        if let d = UserDefaults.standard.data(forKey: Self.key),
+           let t = try? JSONDecoder().decode([DeviceDisplayTemplate].self, from: d),
+           !t.isEmpty {
+            templates = t
+        } else {
+            templates = [.default, .compactDefault]
+        }
+        let aid = UserDefaults.standard.string(forKey: Self.activeKey) ?? ""
+        activeId = templates.contains(where: { $0.id == aid }) ? aid : templates[0].id
+        // 兼容旧版单偏好：迁移为自定义模板
+        if let d = UserDefaults.standard.data(forKey: "deviceDisplayPrefs"),
+           let old = try? JSONDecoder().decode(OldDeviceDisplayPrefs.self, from: d) {
+            var fields: [DeviceDisplayField] = []
+            if old.showDeviceCode { fields.append(.deviceCode) }
+            if old.showLicense { fields.append(.license) }
+            if old.showStatus { fields.append(.status) }
+            if old.showOnline { fields.append(.online) }
+            if old.showPage { fields.append(.page) }
+            if old.showMeta { fields.append(.meta) }
+            if old.showLastSeen { fields.append(.lastSeen) }
+            if old.showCreated { fields.append(.created) }
+            if old.showActions { fields.append(.actions) }
+            let migrated = DeviceDisplayTemplate(name: "我的格式", compact: old.compact, fields: fields)
+            templates.append(migrated)
+            activeId = migrated.id
+            UserDefaults.standard.removeObject(forKey: "deviceDisplayPrefs")
+            save()
+        }
     }
 
     func save() {
-        if let d = try? JSONEncoder().encode(self) {
+        if let d = try? JSONEncoder().encode(templates) {
             UserDefaults.standard.set(d, forKey: Self.key)
         }
+        UserDefaults.standard.set(activeId, forKey: Self.activeKey)
     }
+
+    func add(name: String, compact: Bool, fields: [DeviceDisplayField]) {
+        let t = DeviceDisplayTemplate(name: name, compact: compact, fields: fields)
+        templates.append(t)
+        activeId = t.id
+        save()
+    }
+
+    func update(_ t: DeviceDisplayTemplate) {
+        if let i = templates.firstIndex(where: { $0.id == t.id }) {
+            templates[i] = t
+            save()
+        }
+    }
+
+    func delete(_ t: DeviceDisplayTemplate) {
+        templates.removeAll(where: { $0.id == t.id })
+        if templates.isEmpty { templates = [.default] }
+        if activeId == t.id { activeId = templates[0].id }
+        save()
+    }
+
+    func activate(_ t: DeviceDisplayTemplate) {
+        activeId = t.id
+        save()
+    }
+}
+
+// 旧版单偏好（仅用于迁移）
+private struct OldDeviceDisplayPrefs: Codable {
+    var compact: Bool = false
+    var showDeviceCode: Bool = true
+    var showLicense: Bool = true
+    var showStatus: Bool = true
+    var showOnline: Bool = true
+    var showPage: Bool = true
+    var showMeta: Bool = true
+    var showLastSeen: Bool = true
+    var showCreated: Bool = true
+    var showActions: Bool = true
 }
 
 // MARK: - 原有授权设备（devices 表，最近 200 条）
