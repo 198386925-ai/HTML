@@ -258,6 +258,7 @@ enum DeviceDensity: String, Codable, CaseIterable {
 }
 
 // MARK: - 设备显示模板（用户可手动添加多套）
+// 字体大小/布局疏密为全局设置（AppDisplaySettings），模板只管字段与样式
 struct DeviceDisplayTemplate: Codable, Identifiable, Equatable {
     var id: String = UUID().uuidString
     var name: String
@@ -265,10 +266,6 @@ struct DeviceDisplayTemplate: Codable, Identifiable, Equatable {
     var compact: Bool
     /// 按显示顺序排列的字段
     var fields: [DeviceDisplayField]
-    /// 字体大小
-    var fontSize: DeviceFontSize = .standard
-    /// 布局疏密
-    var density: DeviceDensity = .standard
 
     static var `default`: DeviceDisplayTemplate {
         DeviceDisplayTemplate(name: "详细", compact: false, fields: DeviceDisplayField.allCases)

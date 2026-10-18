@@ -21,6 +21,7 @@ struct DevicesView: View {
     @State private var confirmGrant: (DeviceInfo, Bool)?
     @State private var refreshTimer: Timer?
     @StateObject private var templateStore = DeviceTemplateStore()
+    @EnvironmentObject var display: AppDisplaySettings
     @State private var showDisplaySettings = false
 
     let filters = [("all", "全部设备"), ("online", "在线设备"),
@@ -126,10 +127,10 @@ struct DevicesView: View {
                                     }
                                 }
                             }
-                            .padding(.vertical, templateStore.active.density.cardPadding)
+                            .padding(.vertical, display.density.cardPadding)
                         } else {
                             // 详细：完整卡片
-                            VStack(alignment: .leading, spacing: templateStore.active.density.vSpacing) {
+                            VStack(alignment: .leading, spacing: display.density.vSpacing) {
                                 HStack {
                                     if templateStore.active.has(.deviceCode) {
                                         Text(d.deviceCode)
@@ -191,7 +192,7 @@ struct DevicesView: View {
                                     .font(.subheadline)
                                 }
                             }
-                            .padding(.vertical, templateStore.active.density.cardPadding)
+                            .padding(.vertical, display.density.cardPadding)
                         }
                     }
                 }
@@ -306,14 +307,9 @@ struct DevicesView: View {
         return t
     }
 
-    /// 模板字体大小 -> 系统字号
+    /// 全局字体大小 -> 系统字号
     private var templateSizeCategory: ContentSizeCategory {
-        switch templateStore.active.fontSize {
-        case .small: return .small
-        case .standard: return .medium
-        case .large: return .large
-        case .extraLarge: return .extraExtraLarge
-        }
+        display.sizeCategory
     }
 
     private func statusColor(_ s: String) -> Color {

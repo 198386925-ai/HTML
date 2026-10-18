@@ -7,6 +7,7 @@ enum AdminTab: Int {
 
 struct ContentView: View {
     @EnvironmentObject var api: AdminAPI
+    @EnvironmentObject var display: AppDisplaySettings
     @State private var tab: AdminTab = .overview
 
     var body: some View {
@@ -14,24 +15,28 @@ struct ContentView: View {
             if api.loggedIn {
                 TabView(selection: $tab) {
                     OverviewView(tab: $tab)
-                        .tabItem { Label("总览", systemImage: "chart.bar") }
+                        .tabItem { Label("总览", image: "TabOverview") }
                         .tag(AdminTab.overview)
                     CodesView()
-                        .tabItem { Label("生成", systemImage: "plus.app") }
+                        .tabItem { Label("生成", image: "TabGenerate") }
                         .tag(AdminTab.codes)
                     DevicesView()
-                        .tabItem { Label("设备", systemImage: "iphone") }
+                        .tabItem { Label("设备", image: "TabDevices") }
                         .tag(AdminTab.devices)
                     LicensesView()
-                        .tabItem { Label("卡密", systemImage: "ticket") }
+                        .tabItem { Label("卡密", image: "TabLicenses") }
                         .tag(AdminTab.licenses)
                     VersionsView()
-                        .tabItem { Label("版本", systemImage: "tag") }
+                        .tabItem { Label("版本", image: "TabVersions") }
                         .tag(AdminTab.versions)
                 }
+                // 全局字号
+                .environment(\.sizeCategory, display.sizeCategory)
             } else {
                 LoginView()
             }
         }
+        // 全局自定义字体（未设置时不覆盖）
+        .environment(\.font, display.defaultFont)
     }
 }
