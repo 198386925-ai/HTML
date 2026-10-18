@@ -148,12 +148,7 @@ struct DevicesView: View {
                                 }
                                 if prefs.showStatus || prefs.showLicense {
                                     HStack {
-                                        var t = ""
-                                        if prefs.showStatus { t += d.status }
-                                        if prefs.showLicense, let l = d.label, !l.isEmpty {
-                                            t += (t.isEmpty ? "" : " · ") + l
-                                        }
-                                        Text(t)
+                                        Text(statusText(for: d))
                                             .font(.caption)
                                             .foregroundColor(statusColor(d.status))
                                         Spacer()
@@ -298,6 +293,16 @@ struct DevicesView: View {
                 }
             }
         }
+    }
+
+    /// 状态行文本：按显示偏好组合状态 + 卡密信息
+    private func statusText(for d: DeviceInfo) -> String {
+        var t = ""
+        if prefs.showStatus { t += d.status }
+        if prefs.showLicense, let l = d.label, !l.isEmpty {
+            t += (t.isEmpty ? "" : " · ") + l
+        }
+        return t
     }
 
     private func statusColor(_ s: String) -> Color {
