@@ -24,11 +24,8 @@ struct DeviceTemplateEditorView: View {
                 .pickerStyle(.segmented)
             }
 
-            Section(footer: Text("字体大小与布局疏密为全局设置，在「设置」中调整。")) {
-                EmptyView()
-            }
-
-            Section(header: Text("显示字段（按住拖动排序）")) {
+            Section(header: Text("显示字段（按住拖动排序）"),
+                    footer: Text("字体大小与布局疏密为全局设置，在「设置」中调整。")) {
                 ForEach(template.fields, id: \.self) { field in
                     HStack {
                         Text(field.title)

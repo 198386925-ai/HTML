@@ -15,19 +15,34 @@ struct ContentView: View {
             if api.loggedIn {
                 TabView(selection: $tab) {
                     OverviewView(tab: $tab)
-                        .tabItem { Label("总览", image: "TabOverview") }
+                        .tabItem {
+                            Image("TabOverview")
+                            Text("总览")
+                        }
                         .tag(AdminTab.overview)
                     CodesView()
-                        .tabItem { Label("生成", image: "TabGenerate") }
+                        .tabItem {
+                            Image("TabGenerate")
+                            Text("生成")
+                        }
                         .tag(AdminTab.codes)
                     DevicesView()
-                        .tabItem { Label("设备", image: "TabDevices") }
+                        .tabItem {
+                            Image("TabDevices")
+                            Text("设备")
+                        }
                         .tag(AdminTab.devices)
                     LicensesView()
-                        .tabItem { Label("卡密", image: "TabLicenses") }
+                        .tabItem {
+                            Image("TabLicenses")
+                            Text("卡密")
+                        }
                         .tag(AdminTab.licenses)
                     VersionsView()
-                        .tabItem { Label("版本", image: "TabVersions") }
+                        .tabItem {
+                            Image("TabVersions")
+                            Text("版本")
+                        }
                         .tag(AdminTab.versions)
                 }
                 // 全局字号
