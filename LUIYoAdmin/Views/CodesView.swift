@@ -191,7 +191,7 @@ struct LabeledField: View {
     var kbType: UIKeyboardType = .default
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 3) {
                 Text(label).font(.subheadline)
                 if let h = hint {
@@ -201,13 +201,13 @@ struct LabeledField: View {
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
                 .padding(.horizontal, 12)
-                .padding(.vertical, 10)
+                .frame(height: 44)
                 .background(Color(.systemGray6))
-                .cornerRadius(20)
+                .cornerRadius(22)
                 .keyboardType(kbType)
         }
         .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 2, trailing: 16))
+        .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
     }
 
     func keyboardType(_ t: UIKeyboardType) -> LabeledField {
