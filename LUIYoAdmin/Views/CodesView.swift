@@ -61,7 +61,7 @@ struct CodesView: View {
                             }
                             ForEach(batch.codes, id: \.self) { c in
                                 HStack {
-                                    Text(c).font(.caption).monospace().textSelection(.enabled)
+                                    Text(c).font(.caption).fontDesign(.monospaced).textSelection(.enabled)
                                     Spacer()
                                     Button { UIPasteboard.general.string = c } label: {
                                         Image(systemName: "doc.on.doc").font(.caption)
