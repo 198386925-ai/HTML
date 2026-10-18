@@ -41,7 +41,7 @@ struct VersionsView: View {
                         ForEach(list) { v in
                             VStack(alignment: .leading, spacing: 4) {
                                 HStack {
-                                    Text(v.version).font(.headline).monospace()
+                                    Text(v.version).font(.headline).fontDesign(.monospaced)
                                     Spacer()
                                     Text(v.blocked ? "已禁用" : "正常")
                                         .font(.caption)
