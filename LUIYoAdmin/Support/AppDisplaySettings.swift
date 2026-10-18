@@ -32,7 +32,7 @@ class AppDisplaySettings: ObservableObject {
         // 注册已导入的字体
         FontImporter.registerAll(names: self.importedFonts)
         // if let cf = self.customFontName {
-        FontHook.shared.setCustomFont(cf)
+        // FontHook.shared.setCustomFont(cf) // Build 38: temp disabled
         // }
     }
 
@@ -45,12 +45,12 @@ class AppDisplaySettings: ObservableObject {
 
     func useSystemFont() {
         customFontName = nil
-        FontHook.shared.setCustomFont(nil)
+        // FontHook.shared.setCustomFont(nil) // Build 38: temp disabled
     }
 
     func useFont(_ psName: String) {
         customFontName = psName
-        FontHook.shared.setCustomFont(psName)
+        // FontHook.shared.setCustomFont(psName) // Build 38: temp disabled
     }
 
     func deleteFont(_ psName: String) {
@@ -58,7 +58,7 @@ class AppDisplaySettings: ObservableObject {
         importedFonts.removeAll { $0 == psName }
         if customFontName == psName {
             customFontName = nil
-            FontHook.shared.setCustomFont(nil)
+            // FontHook.shared.setCustomFont(nil) // Build 38: temp disabled
         }
         // 刷新已导入列表
         importedFonts = FontImporter.listImportedFonts()
@@ -161,22 +161,6 @@ enum FontImporter {
 
     static func isFontFile(_ url: URL) -> Bool {
         return supportedExtensions.contains(url.pathExtension.lowercased())
-    }
-
-    /// 扫描 Documents 根目录的字体文件（配合 iTunes 文件共享使用）
-    static func scanDocuments() -> [String] {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        guard let files = try? FileManager.default.contentsOfDirectory(at: docs, includingPropertiesForKeys: nil) else { return [] }
-        var found: [String] = []
-        for file in files where isFontFile(file) {
-            if let name = registerFont(at: file) {
-                // 复制到 Fonts 目录
-                let dest = fontsDirectory().appendingPathComponent(file.lastPathComponent)
-                try? FileManager.default.copyItem(at: file, to: dest)
-                found.append(name)
-            }
-        }
-        return found
     }
 
     static func registerAll(names: [String]) {

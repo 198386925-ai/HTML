@@ -1,6 +1,31 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
+
+
+/// UIKit 文档选择器（绕过 SwiftUI fileImporter 在 TabView 中的 bug）
+struct FontDocumentPicker: UIViewControllerRepresentable {
+    var onPick: (URL?) -> Void
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.data], asCopy: true)
+        picker.delegate = context.coordinator
+        picker.allowsMultipleSelection = false
+        return picker
+    }
+    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
+    func makeCoordinator() -> Coordinator { Coordinator(onPick: onPick) }
+    class Coordinator: NSObject, UIDocumentPickerDelegate {
+        var onPick: (URL?) -> Void
+        init(onPick: @escaping (URL?) -> Void) { self.onPick = onPick }
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            onPick(urls.first)
+        }
+        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            onPick(nil)
+        }
+    }
+}
 
 struct SettingsView: View {
     @EnvironmentObject var api: AdminAPI
@@ -76,18 +101,7 @@ struct SettingsView: View {
                     } label: {
                         Label("导入字体", systemImage: "square.and.arrow.down")
                     }
-                    Button {
-                        let found = FontImporter.scanDocuments()
-                        for name in found {
-                            if !display.importedFonts.contains(name) {
-                                display.importedFonts.append(name)
-                            }
-                        }
-                        importMessage = found.isEmpty ? "文档目录没有找到字体文件" : "找到 \(found.count) 个字体"
-                        showImportAlert = true
-                    } label: {
-                        Label("扫描文档目录", systemImage: "magnifyingglass")
-                    }
+
 
                     if let e = importError {
                         Text(e).font(.caption).foregroundColor(.red)
@@ -124,24 +138,23 @@ struct SettingsView: View {
                 Text(importMessage ?? "")
             }
             .onAppear { server = api.serverBase; saved = false }
-            .fileImporter(
-                isPresented: $showImporter,
-                allowedContentTypes: [.data],
-                allowsMultipleSelection: false
-            ) { result in
-                switch result {
-                case .success(let urls):
-                    if let url = urls.first {
-                        let (name, error) = display.importFontDetailed(from: url)
-                        if let name = name {
-                            importMessage = "导入成功: \(name)"
-                        } else {
-                            importMessage = "导入失败: \(error ?? "未知错误")"
-                        }
+            .sheet(isPresented: $showImporter) {
+                FontDocumentPicker { url in
+                    showImporter = false
+                    guard let url = url else {
+                        importMessage = "已取消选择"
                         showImportAlert = true
+                        return
                     }
-                case .failure:
-                    importMessage = "选择文件失败"
+                    let (name, error) = display.importFontDetailed(from: url)
+                    if let name = name {
+                        importMessage = "导入成功"
+                    } else {
+                        importMessage = "导入失败"
+                    }
+                    if let error = error {
+                        importMessage = importMessage! + ": " + error
+                    }
                     showImportAlert = true
                 }
             }
