@@ -266,6 +266,10 @@ struct DeviceDisplayTemplate: Codable, Identifiable, Equatable {
     var compact: Bool
     /// 按显示顺序排列的字段
     var fields: [DeviceDisplayField]
+    /// 字体大小
+    var fontSize: DeviceFontSize = .standard
+    /// 布局疏密
+    var density: DeviceDensity = .standard
 
     static var `default`: DeviceDisplayTemplate {
         DeviceDisplayTemplate(name: "详细", compact: false, fields: DeviceDisplayField.allCases)

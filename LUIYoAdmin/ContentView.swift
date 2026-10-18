@@ -7,7 +7,6 @@ enum AdminTab: Int {
 
 struct ContentView: View {
     @EnvironmentObject var api: AdminAPI
-    @EnvironmentObject var display: AppDisplaySettings
     @State private var tab: AdminTab = .overview
 
     var body: some View {
@@ -45,13 +44,9 @@ struct ContentView: View {
                         }
                         .tag(AdminTab.versions)
                 }
-                // 全局字号
-                .environment(\.sizeCategory, display.sizeCategory)
             } else {
                 LoginView()
             }
         }
-        // 全局自定义字体（未设置时不覆盖）
-        .environment(\.font, display.defaultFont)
     }
 }
