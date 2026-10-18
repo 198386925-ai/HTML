@@ -20,6 +20,7 @@ struct CodesView: View {
                 Section {
                     Text("每次可生成 1–100 个，0 天表示永久。新卡密只在当前设备保留近期记录，请及时复制备份。")
                         .font(.caption).foregroundColor(.secondary)
+                        .listRowSeparator(.hidden)
                 }
 
                 Section("生成激活码") {
@@ -33,8 +34,10 @@ struct CodesView: View {
                     Button(busy ? "生成中…" : "批量生成卡密") { generate() }
                         .disabled(busy)
                         .frame(maxWidth: .infinity)
+                        .listRowSeparator(.hidden)
                     if let e = error {
                         Text(e).foregroundColor(.red).font(.footnote)
+                            .listRowSeparator(.hidden)
                     }
                 }
 
@@ -51,11 +54,12 @@ struct CodesView: View {
                                 .font(.subheadline)
                                 .disabled(selected.isEmpty)
                         }
+                        .listRowSeparator(.hidden)
                     }
                     ForEach(history) { batch in
                         Section {
                             HStack {
-                                VStack(alignment: .leading) {
+                                VStack(alignment: .leading, spacing: 2) {
                                     Text(dateStr(batch.date)).font(.subheadline).bold()
                                     Text("设备上限 \(batch.maxDevices) · \(batch.days == 0 ? "永久" : "\(batch.days) 天") · \(batch.codes.count) 条")
                                         .font(.caption).foregroundColor(.secondary)
@@ -64,6 +68,18 @@ struct CodesView: View {
                                     }
                                 }
                                 Spacer()
+                                Button(role: .destructive) {
+                                    if let idx = history.firstIndex(where: { $0.id == batch.id }) {
+                                        history.remove(at: idx)
+                                        selected.remove(batch.id)
+                                        saveHistory()
+                                    }
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.subheadline)
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.plain)
                                 Button {
                                     if selected.contains(batch.id) { selected.remove(batch.id) }
                                     else { selected.insert(batch.id) }
@@ -71,9 +87,11 @@ struct CodesView: View {
                                     Image(systemName: selected.contains(batch.id)
                                         ? "checkmark.circle.fill" : "circle")
                                 }
+                                .buttonStyle(.plain)
                             }
+                            .listRowSeparator(.hidden)
                             ForEach(batch.codes, id: \.self) { c in
-                                HStack {
+                                HStack(spacing: 8) {
                                     Button {
                                         if selectedCodes.contains(c) { selectedCodes.remove(c) }
                                         else { selectedCodes.insert(c) }
@@ -81,12 +99,15 @@ struct CodesView: View {
                                         Image(systemName: selectedCodes.contains(c)
                                             ? "checkmark.square.fill" : "square")
                                     }
+                                    .buttonStyle(.plain)
                                     Text(c).font(.system(.caption, design: .monospaced)).textSelection(.enabled)
                                     Spacer()
                                     Button { UIPasteboard.general.string = c } label: {
                                         Image(systemName: "doc.on.doc").font(.caption)
                                     }
+                                    .buttonStyle(.plain)
                                 }
+                                .listRowSeparator(.hidden)
                             }
                         }
                     }
@@ -97,10 +118,12 @@ struct CodesView: View {
                     Section {
                         Text("安全提示：旧卡密数据库只保存不可逆哈希，无法恢复明文。近期记录保存在本机，请及时复制到安全位置。")
                             .font(.caption).foregroundColor(.secondary)
+                            .listRowSeparator(.hidden)
                     }
                 } else {
                     Section("近期生成记录") {
                         Text("暂时没有生成的卡密。").font(.footnote).foregroundColor(.secondary)
+                            .listRowSeparator(.hidden)
                     }
                 }
             }
@@ -168,17 +191,33 @@ struct LabeledField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack {
+            HStack(spacing: 6) {
                 Text(label).font(.subheadline)
                 if let h = hint {
                     Text(h).font(.caption).foregroundColor(.secondary)
                 }
             }
+            glassTextField
+        }
+        .padding(.vertical, 1)
+        .listRowSeparator(.hidden)
+    }
+
+    /// iOS 26+ 原生液态玻璃输入框；低版本用系统圆角边框（均为原生，不自绘）
+    @ViewBuilder
+    private var glassTextField: some View {
+        if #available(iOS 26, *) {
+            TextField(placeholder, text: $text)
+                .textFieldStyle(.plain)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 8)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+                .keyboardType(kbType)
+        } else {
             TextField(placeholder, text: $text)
                 .textFieldStyle(.roundedBorder)
                 .keyboardType(kbType)
         }
-        .padding(.vertical, 2)
     }
 
     func keyboardType(_ t: UIKeyboardType) -> LabeledField {

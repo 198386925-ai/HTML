@@ -207,7 +207,7 @@ struct DevicesView: View {
                 // 原有授权设备管理（最近 200 条）
                 Section("原有授权设备管理（\(legacyFiltered.count)）") {
                     ForEach(legacyFiltered) { d in
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 3) {
                             HStack {
                                 Text(d.deviceCode ?? "未登记设备（记录 #\(d.id)）")
                                     .font(.system(.headline, design: .monospaced))
@@ -215,6 +215,14 @@ struct DevicesView: View {
                                 Text(d.banned ? "已封禁" : "正常")
                                     .font(.caption)
                                     .foregroundColor(d.banned ? .red : .green)
+                            }
+                            // 卡密授权：把卡密显示在设备码下面；设备码授权：第二行显示"设备码授权"
+                            if d.authMode != "设备码授权",
+                               let code = d.licenseCode, !code.isEmpty {
+                                Text(code)
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundColor(.secondary)
+                                    .textSelection(.enabled)
                             }
                             HStack {
                                 Text(d.authMode)

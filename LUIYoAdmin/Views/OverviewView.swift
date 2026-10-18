@@ -9,15 +9,15 @@ struct OverviewView: View {
     @State private var error: String?
     @State private var showSettings = false
 
-    let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
+    let columns = [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)]
 
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(spacing: 16) {
+                VStack(spacing: 10) {
                     // 顶部标题区
                     HStack {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text("LUIYo 后台")
                                 .font(.title2).bold()
                             Text(currentDateString)
@@ -29,16 +29,16 @@ struct OverviewView: View {
                             Image(systemName: "gearshape.fill")
                                 .font(.title3)
                                 .foregroundColor(.secondary)
-                                .padding(10)
-                                .background(Color(.secondarySystemBackground))
-                                .clipShape(Circle())
+                                .padding(8)
+                                .nativeCapsuleGlass()
                         }
+                        .buttonStyle(.plain)
                     }
-                    .padding(.horizontal, 4)
+                    .padding(.horizontal, 2)
 
                     // 统计卡片
                     if let s = stats {
-                        LazyVGrid(columns: columns, spacing: 12) {
+                        LazyVGrid(columns: columns, spacing: 8) {
                             DashboardStatCard(
                                 title: "累计激活设备",
                                 value: "\(s.totalDevices)",
@@ -75,9 +75,9 @@ struct OverviewView: View {
                                     .font(.subheadline)
                                     .foregroundColor(.blue)
                             }
-                            .padding(.bottom, 12)
+                            .padding(.bottom, 8)
 
-                            HStack(spacing: 12) {
+                            HStack(spacing: 8) {
                                 DeviceStatusPill(
                                     title: "登记设备",
                                     value: "\(s.totalDevices)",
@@ -95,22 +95,20 @@ struct OverviewView: View {
                                 )
                             }
                         }
-                        .padding(16)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(16)
-                        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                        .padding(10)
+                        .glassCard(cornerRadius: 24)
                     } else {
                         ProgressView()
-                            .frame(maxWidth: .infinity, minHeight: 200)
+                            .frame(maxWidth: .infinity, minHeight: 160)
                     }
 
                     // 快捷入口
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
                         Text("快捷入口")
                             .font(.headline)
-                            .padding(.horizontal, 4)
+                            .padding(.horizontal, 2)
 
-                        LazyVGrid(columns: columns, spacing: 12) {
+                        LazyVGrid(columns: columns, spacing: 8) {
                             QuickActionCard(title: "生成卡密", icon: "plus.circle.fill", color: .blue) {
                                 tab = .codes
                             }
@@ -130,10 +128,10 @@ struct OverviewView: View {
                         Text(e)
                             .foregroundColor(.red)
                             .font(.footnote)
-                            .padding()
+                            .padding(8)
                     }
                 }
-                .padding()
+                .padding(10)
             }
             .background(Color(.systemGroupedBackground))
             .navigationBarHidden(true)
@@ -170,7 +168,7 @@ struct DashboardStatCard: View {
     let color: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Image(systemName: icon)
                     .font(.body)
@@ -181,16 +179,14 @@ struct DashboardStatCard: View {
                 Spacer()
             }
             Text(value)
-                .font(.system(size: 24, weight: .bold))
+                .font(.system(size: 22, weight: .bold))
             Text(title)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
-        .padding(12)
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+        .glassCard(cornerRadius: 24)
     }
 }
 
@@ -201,7 +197,7 @@ struct DeviceStatusPill: View {
     let color: Color
 
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 4) {
             Text(value)
                 .font(.title3).bold()
                 .foregroundColor(color)
@@ -210,9 +206,8 @@ struct DeviceStatusPill: View {
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(color.opacity(0.1))
-        .cornerRadius(12)
+        .padding(.vertical, 10)
+        .glassCard(cornerRadius: 20)
     }
 }
 
@@ -225,7 +220,7 @@ struct QuickActionCard: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 Image(systemName: icon)
                     .font(.title2)
                     .foregroundColor(color)
@@ -237,11 +232,9 @@ struct QuickActionCard: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            .padding(16)
+            .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.systemBackground))
-            .cornerRadius(16)
-            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+            .glassCard(cornerRadius: 24)
         }
         .buttonStyle(.plain)
     }

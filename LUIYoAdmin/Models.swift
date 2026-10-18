@@ -185,6 +185,7 @@ struct SimpleResp: Decodable {
     let error: String?
 }
 
+
 // MARK: - 设备显示字段
 enum DeviceDisplayField: String, Codable, CaseIterable {
     case deviceCode = "deviceCode"  // 设备码
@@ -375,6 +376,7 @@ struct LegacyDevice: Decodable, Identifiable {
     let id: Int
     let deviceCode: String?
     let authMode: String
+    let licenseCode: String?
     let lastSeen: Int
     let banned: Bool
     let banReason: String
@@ -383,6 +385,7 @@ struct LegacyDevice: Decodable, Identifiable {
         case id
         case deviceCode = "device_code"
         case authMode = "auth_mode"
+        case licenseCode = "license_code"
         case lastSeen = "last_seen"
         case banned
         case banReason = "ban_reason"

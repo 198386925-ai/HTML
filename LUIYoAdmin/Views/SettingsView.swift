@@ -106,13 +106,7 @@ struct SettingsView: View {
             .onAppear { server = api.serverBase; saved = false }
             .fileImporter(
                 isPresented: $showImporter,
-                allowedContentTypes: [
-                    UTType(filenameExtension: "ttf"),
-                    UTType(filenameExtension: "otf"),
-                    UTType(filenameExtension: "ttc"),
-                    UTType(filenameExtension: "otc"),
-                    .font
-                ].compactMap { $0 },
+                allowedContentTypes: [.data],
                 allowsMultipleSelection: false
             ) { result in
                 switch result {
