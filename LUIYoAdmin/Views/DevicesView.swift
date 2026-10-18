@@ -60,7 +60,7 @@ struct DevicesView: View {
                     TextField("D-000001", text: $grantCode)
                         .autocapitalization(.allCharacters)
                         .disableAutocorrection(true)
-                        .font(.system(.body, design: .monospaced))
+                        .font(.system(.body))
                     HStack {
                         Button(grantBusy ? "处理中…" : "授权 SVIP 3") {
                             grantOp(op: "grant")
@@ -98,7 +98,7 @@ struct DevicesView: View {
                             HStack {
                                 if templateStore.active.has(.deviceCode) {
                                     Text(d.deviceCode)
-                                        .font(.system(.subheadline, design: .monospaced))
+                                        .font(.system(.subheadline))
                                         .fontWeight(.semibold)
                                 }
                                 if templateStore.active.has(.status) {
@@ -133,7 +133,7 @@ struct DevicesView: View {
                                 HStack {
                                     if templateStore.active.has(.deviceCode) {
                                         Text(d.deviceCode)
-                                            .font(.system(.headline, design: .monospaced))
+                                            .font(.system(.headline))
                                     }
                                     Spacer()
                                     if templateStore.active.has(.online) {
@@ -210,7 +210,7 @@ struct DevicesView: View {
                         VStack(alignment: .leading, spacing: 3) {
                             HStack {
                                 Text(d.deviceCode ?? "未登记设备（记录 #\(d.id)）")
-                                    .font(.system(.headline, design: .monospaced))
+                                    .font(.system(.headline))
                                 Spacer()
                                 Text(d.banned ? "已封禁" : "正常")
                                     .font(.caption)
@@ -220,7 +220,7 @@ struct DevicesView: View {
                             if d.authMode != "设备码授权",
                                let code = d.licenseCode, !code.isEmpty {
                                 Text(code)
-                                    .font(.system(.caption, design: .monospaced))
+                                    .font(.system(.caption))
                                     .foregroundColor(.secondary)
                                     .textSelection(.enabled)
                             }

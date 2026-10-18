@@ -100,7 +100,7 @@ struct CodesView: View {
                                             ? "checkmark.square.fill" : "square")
                                     }
                                     .buttonStyle(.plain)
-                                    Text(c).font(.system(.caption, design: .monospaced)).textSelection(.enabled)
+                                    Text(c).font(.system(.caption)).textSelection(.enabled)
                                     Spacer()
                                     Button { UIPasteboard.general.string = c } label: {
                                         Image(systemName: "doc.on.doc").font(.caption)
