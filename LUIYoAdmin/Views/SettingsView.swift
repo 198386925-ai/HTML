@@ -112,7 +112,7 @@ struct SettingsView: View {
                 Text(importMessage ?? "")
             }
             .onAppear { server = api.serverBase; saved = false }
-                        .fileImporter(
+            .fileImporter(
                 isPresented: $showImporter,
                 allowedContentTypes: [.data],
                 allowsMultipleSelection: false
@@ -134,4 +134,5 @@ struct SettingsView: View {
                 }
             }
     }
+}
 }
