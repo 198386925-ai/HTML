@@ -61,7 +61,8 @@ struct VersionsView: View {
                                     Text("原因：" + v.note).font(.caption).foregroundColor(.secondary)
                                 }
                             }
-                            .swipeActions(edge: .trailing) {
+                            .listRowSeparator(.hidden)
+                        .swipeActions(edge: .trailing) {
                                 if v.blocked {
                                     Button("恢复") { opOnList(op: "unblock", version: v.version) }
                                         .tint(.green)

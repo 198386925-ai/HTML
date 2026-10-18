@@ -224,6 +224,7 @@ struct DevicesView: View {
                             }
                             .font(.caption).foregroundColor(.secondary)
                         }
+                        .listRowSeparator(.hidden)
                         .swipeActions(edge: .trailing) {
                             if d.banned {
                                 Button("解封") { legacyAct(d, op: "unban") }.tint(.green)
