@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// 版本控制：与网页 versions 面板一致
-/// 登记/禁用版本（版本号/提示文案/原因/立即禁用）+ 已登记版本（版本/状态/提示/原因/操作）
+/// 版本控制：设计三风格（深紫底 + 白色圆卡）
 struct VersionsView: View {
     @EnvironmentObject var api: AdminAPI
     @State private var list: [AppVersion] = []
@@ -13,45 +12,79 @@ struct VersionsView: View {
     @State private var blockNow = true
     @State private var busy = false
 
+    private let purple = Color(red: 0.29, green: 0.23, blue: 1.0)
+
     var body: some View {
-        NavigationView {
-            List {
-                Section("登记 / 禁用版本") {
+        ScrollView {
+            VStack(spacing: 16) {
+                // 标题
+                HStack {
+                    Text("版本")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                    Spacer()
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+
+                // 登记卡片
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("登记 / 禁用版本")
+                        .font(.headline)
+                        .foregroundColor(.primary)
                     Text("客户端联网后会自动同步版本号到本页。新版本出现后可直接禁用或恢复；禁用后所有该版本 App 无法使用并提示下载正版。也可手动补登记。")
-                        .font(.caption).foregroundColor(.secondary)
-                        .listRowSeparator(.hidden)
-                    LabeledField(label: "版本号", placeholder: "例如 1.0.5", text: $version)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                    LabeledField(label: "提示文案", placeholder: "请下载正版使用", text: $message)
-                    LabeledField(label: "原因", placeholder: "可选", text: $note)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    PurpleField(label: "版本号", placeholder: "例如 1.0.5", text: $version)
+                    PurpleField(label: "提示文案", placeholder: "请下载正版使用", text: $message)
+                    PurpleField(label: "原因", placeholder: "可选", text: $note)
+
                     Toggle("立即禁用此版本", isOn: $blockNow)
-                        .listRowSeparator(.hidden)
-                    Button(busy ? "处理中…" : "保存版本") {
+                        .tint(purple)
+
+                    Button {
                         doOp(op: blockNow ? "block" : "add")
+                    } label: {
+                        Text(busy ? "处理中…" : "保存版本")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(purple)
+                            .cornerRadius(16)
                     }
                     .disabled(busy || version.isEmpty)
-                    .frame(maxWidth: .infinity)
-                    .listRowSeparator(.hidden)
+                    .opacity(busy || version.isEmpty ? 0.5 : 1.0)
+
                     if let e = error {
                         Text(e).foregroundColor(.red).font(.footnote)
-                            .listRowSeparator(.hidden)
                     }
                 }
+                .padding(20)
+                .background(Color.white)
+                .cornerRadius(24)
+                .padding(.horizontal, 16)
 
-                Section("已登记版本") {
+                // 已登记版本
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("已登记版本")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+
                     if loading && list.isEmpty {
                         ProgressView()
-                            .listRowSeparator(.hidden)
+                            .frame(maxWidth: .infinity)
                     } else if list.isEmpty {
                         Text("暂无记录。请先添加需要管控的旧版本号。")
-                            .foregroundColor(.secondary).font(.footnote)
-                            .listRowSeparator(.hidden)
+                            .foregroundColor(.secondary)
+                            .font(.footnote)
                     } else {
                         ForEach(list) { v in
-                            VStack(alignment: .leading, spacing: 3) {
+                            VStack(alignment: .leading, spacing: 6) {
                                 HStack {
-                                    Text(v.version).font(.system(.headline, design: .monospaced))
+                                    Text(v.version)
+                                        .font(.system(.headline, design: .monospaced))
                                     Spacer()
                                     Text(v.blocked ? "已禁用" : "允许")
                                         .font(.caption).bold()
@@ -61,41 +94,55 @@ struct VersionsView: View {
                                         .cornerRadius(10)
                                 }
                                 if !v.message.isEmpty {
-                                    Text("提示：" + v.message).font(.caption).foregroundColor(.secondary)
+                                    Text("提示：" + v.message)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
                                 if !v.note.isEmpty {
-                                    Text("原因：" + v.note).font(.caption).foregroundColor(.secondary)
+                                    Text("原因：" + v.note)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                HStack(spacing: 8) {
+                                    Spacer()
+                                    Button("编辑") {
+                                        version = v.version
+                                        message = v.message
+                                        note = v.note
+                                        blockNow = v.blocked
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(purple)
+                                    if v.blocked {
+                                        Button("恢复") { opOnList(op: "unblock", version: v.version) }
+                                            .font(.caption)
+                                            .foregroundColor(.green)
+                                    } else {
+                                        Button("禁用") { opOnList(op: "block", version: v.version) }
+                                            .font(.caption)
+                                            .foregroundColor(.orange)
+                                    }
+                                    Button("删除") { opOnList(op: "delete", version: v.version) }
+                                        .font(.caption)
+                                        .foregroundColor(.red)
                                 }
                             }
-                            .listRowSeparator(.hidden)
-                        .swipeActions(edge: .trailing) {
-                                Button("编辑") {
-                                    version = v.version
-                                    message = v.message
-                                    note = v.note
-                                    blockNow = v.blocked
-                                }
-                                .tint(.blue)
-                                if v.blocked {
-                                    Button("恢复") { opOnList(op: "unblock", version: v.version) }
-                                        .tint(.green)
-                                } else {
-                                    Button("禁用") { opOnList(op: "block", version: v.version) }
-                                        .tint(.orange)
-                                }
-                                Button("删除", role: .destructive) {
-                                    opOnList(op: "delete", version: v.version)
-                                }
-                            }
+                            .padding(12)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(16)
                         }
                     }
                 }
+                .padding(20)
+                .background(Color.white)
+                .cornerRadius(24)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 20)
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationTitle("版本")
-            .refreshable { await reload() }
-            .task { await reload() }
         }
+        .background(purple.ignoresSafeArea())
+        .refreshable { await reload() }
+        .task { await reload() }
     }
 
     private func doOp(op: String) {
@@ -131,5 +178,26 @@ struct VersionsView: View {
         do { list = try await api.versions() }
         catch { self.error = error.localizedDescription }
         loading = false
+    }
+}
+
+/// 设计三风格输入框
+struct PurpleField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label)
+                .font(.subheadline)
+                .foregroundColor(.primary)
+            TextField(placeholder, text: $text)
+                .padding(12)
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+        }
     }
 }
