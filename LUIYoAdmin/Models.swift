@@ -186,7 +186,7 @@ struct SimpleResp: Decodable {
 }
 
 // MARK: - 设备显示格式偏好（用户自定义）
-struct DeviceDisplayPrefs: Codable {
+struct DeviceDisplayPrefs: Codable, Equatable {
     /// 卡片样式：true=紧凑， false=详细
     var compact: Bool = false
     var showDeviceCode: Bool = true  // 设备码
