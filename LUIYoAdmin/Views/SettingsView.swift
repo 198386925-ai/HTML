@@ -2,28 +2,12 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var api: AdminAPI
-    @EnvironmentObject var display: AppDisplaySettings
     @State private var server = ""
     @State private var saved = false
 
     var body: some View {
         NavigationView {
             Form {
-                Section("显示") {
-                    Picker("字体大小", selection: $display.fontSize) {
-                        ForEach(DeviceFontSize.allCases, id: \.self) { fs in
-                            Text(fs.title).tag(fs)
-                        }
-                    }
-                    Picker("布局疏密", selection: $display.density) {
-                        ForEach(DeviceDensity.allCases, id: \.self) { d in
-                            Text(d.title).tag(d)
-                        }
-                    }
-                }
-                .onChange(of: display.fontSize) { _ in display.save() }
-                .onChange(of: display.density) { _ in display.save() }
-
                 Section("服务器") {
                     TextField("https://…/luiyo", text: $server)
                         .keyboardType(.URL)

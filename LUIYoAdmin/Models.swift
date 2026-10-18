@@ -258,7 +258,7 @@ enum DeviceDensity: String, Codable, CaseIterable {
 }
 
 // MARK: - 设备显示模板（用户可手动添加多套）
-// 字体大小/布局疏密为全局设置（AppDisplaySettings），模板只管字段与样式
+// 模板只管字段与样式
 struct DeviceDisplayTemplate: Codable, Identifiable, Equatable {
     var id: String = UUID().uuidString
     var name: String
