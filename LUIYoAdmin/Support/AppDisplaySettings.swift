@@ -111,6 +111,29 @@ class AppDisplaySettings: ObservableObject {
         }
         return .system(size: baseFontSize)
     }
+
+    /// 返回适配自定义字体的 Font（用于替换所有 .font(.X)）
+    func font(for style: Font.TextStyle) -> Font {
+        guard let name = customFontName else {
+            return .system(style)
+        }
+        let size: CGFloat
+        switch style {
+        case .largeTitle: size = 34
+        case .title: size = 28
+        case .title2: size = 22
+        case .title3: size = 20
+        case .headline: size = 17
+        case .body: size = 17
+        case .callout: size = 16
+        case .subheadline: size = 15
+        case .footnote: size = 13
+        case .caption: size = 12
+        case .caption2: size = 11
+        @unknown default: size = 17
+        }
+        return .custom(name, size: size, relativeTo: style)
+    }
 }
 
 // TTF 字体导入器

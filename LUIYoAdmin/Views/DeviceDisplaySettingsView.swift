@@ -2,6 +2,7 @@ import SwiftUI
 
 /// 设备显示格式：多模板管理（切换/新增/编辑/删除）
 struct DeviceDisplaySettingsView: View {
+    @EnvironmentObject var display: AppDisplaySettings
     @ObservedObject var store: DeviceTemplateStore
     @Environment(\.dismiss) var dismiss
     @State private var newName = ""
@@ -25,7 +26,7 @@ struct DeviceDisplaySettingsView: View {
                                         Text(t.name)
                                             .foregroundColor(.primary)
                                         Text("\(t.compact ? "紧凑" : "详细") · \(t.fields.count) 个字段")
-                                            .font(.caption)
+                                            .font(display.font(for: .caption))
                                             .foregroundColor(.secondary)
                                     }
                                 }
@@ -33,7 +34,7 @@ struct DeviceDisplaySettingsView: View {
                             .buttonStyle(.plain)
                             Spacer()
                             Button("编辑") { editing = t }
-                                .font(.subheadline)
+                                .font(display.font(for: .subheadline))
                         }
                     }
                 }
