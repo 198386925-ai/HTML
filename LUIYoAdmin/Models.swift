@@ -212,6 +212,51 @@ enum DeviceDisplayField: String, Codable, CaseIterable {
     }
 }
 
+// MARK: - 字体大小选项
+enum DeviceFontSize: String, Codable, CaseIterable {
+    case small, standard, large, extraLarge
+
+    var title: String {
+        switch self {
+        case .small: return "小"
+        case .standard: return "标准"
+        case .large: return "大"
+        case .extraLarge: return "特大"
+        }
+    }
+}
+
+// MARK: - 布局疏密选项
+enum DeviceDensity: String, Codable, CaseIterable {
+    case compact, standard, spacious
+
+    var title: String {
+        switch self {
+        case .compact: return "紧凑"
+        case .standard: return "标准"
+        case .spacious: return "宽松"
+        }
+    }
+
+    /// 卡片内行间距
+    var vSpacing: CGFloat {
+        switch self {
+        case .compact: return 2
+        case .standard: return 5
+        case .spacious: return 10
+        }
+    }
+
+    /// 卡片上下内边距
+    var cardPadding: CGFloat {
+        switch self {
+        case .compact: return 2
+        case .standard: return 4
+        case .spacious: return 8
+        }
+    }
+}
+
 // MARK: - 设备显示模板（用户可手动添加多套）
 struct DeviceDisplayTemplate: Codable, Identifiable, Equatable {
     var id: String = UUID().uuidString
@@ -220,6 +265,10 @@ struct DeviceDisplayTemplate: Codable, Identifiable, Equatable {
     var compact: Bool
     /// 按显示顺序排列的字段
     var fields: [DeviceDisplayField]
+    /// 字体大小
+    var fontSize: DeviceFontSize = .standard
+    /// 布局疏密
+    var density: DeviceDensity = .standard
 
     static var `default`: DeviceDisplayTemplate {
         DeviceDisplayTemplate(name: "详细", compact: false, fields: DeviceDisplayField.allCases)

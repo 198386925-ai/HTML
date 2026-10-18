@@ -126,10 +126,10 @@ struct DevicesView: View {
                                     }
                                 }
                             }
-                            .padding(.vertical, 2)
+                            .padding(.vertical, templateStore.active.density.cardPadding)
                         } else {
                             // 详细：完整卡片
-                            VStack(alignment: .leading, spacing: 5) {
+                            VStack(alignment: .leading, spacing: templateStore.active.density.vSpacing) {
                                 HStack {
                                     if templateStore.active.has(.deviceCode) {
                                         Text(d.deviceCode)
@@ -191,10 +191,11 @@ struct DevicesView: View {
                                     .font(.subheadline)
                                 }
                             }
-                            .padding(.vertical, 4)
+                            .padding(.vertical, templateStore.active.density.cardPadding)
                         }
                     }
                 }
+                .environment(\.sizeCategory, templateSizeCategory)
 
                 // 原有授权设备管理（最近 200 条）
                 Section("原有授权设备管理（\(legacyFiltered.count)）") {
@@ -303,6 +304,16 @@ struct DevicesView: View {
             t += (t.isEmpty ? "" : " · ") + l
         }
         return t
+    }
+
+    /// 模板字体大小 -> 系统字号
+    private var templateSizeCategory: ContentSizeCategory {
+        switch templateStore.active.fontSize {
+        case .small: return .small
+        case .standard: return .medium
+        case .large: return .large
+        case .extraLarge: return .extraExtraLarge
+        }
     }
 
     private func statusColor(_ s: String) -> Color {
