@@ -43,7 +43,7 @@ struct DevicesView: View {
                     TextField("D-000001", text: $grantCode)
                         .autocapitalization(.allCharacters)
                         .disableAutocorrection(true)
-                        .monospace()
+                        .fontDesign(.monospaced)
                     HStack {
                         Button(grantBusy ? "处理中…" : "授权 SVIP 3") {
                             grantOp(op: "grant")
@@ -76,7 +76,7 @@ struct DevicesView: View {
                     ForEach(filtered) { d in
                         VStack(alignment: .leading, spacing: 4) {
                             HStack {
-                                Text(d.deviceCode).font(.headline).monospace()
+                                Text(d.deviceCode).font(.headline).fontDesign(.monospaced)
                                 if d.online {
                                     Circle().fill(Color.green).frame(width: 8, height: 8)
                                 }
