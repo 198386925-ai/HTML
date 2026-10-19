@@ -167,7 +167,7 @@ struct DevicesView: View {
                                             if templateStore.active.has(.created) {
                                                 HStack {
                                                     Text("首次登记 " + d.createdAtText)
-                                                        .font(display.fBody)
+                                                        .font(display.fCaption).foregroundColor(.secondary)
                                                     if d.installationCount > 1 {
                                                         Text("· 安装记录 " + d.installationCodes.joined(separator: "、"))
                                                             .font(display.fBody)

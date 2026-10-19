@@ -51,8 +51,20 @@ class AppDisplaySettings: ObservableObject {
     }
 
     func useFont(_ psName: String) {
+        // 先确保字体已注册：尝试重新注册字体文件
+        FontImporter.registerAll(names: self.importedFonts)
+        // 验证字体可用
+        if UIFont(name: psName, size: 16) == nil {
+            // 尝试按文件名重新注册
+            let dir = FontImporter.fontsDirectory()
+            if let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) {
+                for file in files where FontImporter.isFontFile(file) {
+                    _ = FontImporter.registerFont(at: file)
+                }
+            }
+        }
         customFontName = psName
-        FontHook.shared.setCustomFont(psName) 
+        FontHook.shared.setCustomFont(psName)
     }
 
     func deleteFont(_ psName: String) {
