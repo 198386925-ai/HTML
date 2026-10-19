@@ -62,19 +62,10 @@ struct DevicesView: View {
                             .autocapitalization(.allCharacters)
                             .disableAutocorrection(true)
                             .font(display.fBody)
-                            .padding(.horizontal, 12)
-                            .frame(height: 40)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(20)
                         Button(grantBusy ? "处理中…" : "授权") {
                             grantOp(op: "grant")
                         }
                         .disabled(grantBusy || grantCode.isEmpty)
-                        .padding(.horizontal, 16)
-                        .frame(height: 40)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(20)
                     }
 
                 }
