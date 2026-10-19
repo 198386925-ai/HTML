@@ -163,6 +163,7 @@ struct OverviewView: View {
 
 /// 仪表盘统计卡片
 struct DashboardStatCard: View {
+    @EnvironmentObject var display: AppDisplaySettings
     let title: String
     let value: String
     let icon: String
@@ -193,6 +194,7 @@ struct DashboardStatCard: View {
 
 /// 设备状态小胶囊
 struct DeviceStatusPill: View {
+    @EnvironmentObject var display: AppDisplaySettings
     let title: String
     let value: String
     let color: Color
@@ -214,6 +216,7 @@ struct DeviceStatusPill: View {
 
 /// 快捷入口卡片
 struct QuickActionCard: View {
+    @EnvironmentObject var display: AppDisplaySettings
     let title: String
     let icon: String
     let color: Color
@@ -243,6 +246,7 @@ struct QuickActionCard: View {
 
 // 保留旧组件（其他页面仍在使用）
 struct StatCell: View {
+    @EnvironmentObject var display: AppDisplaySettings
     let title: String
     let value: String
     var body: some View {
@@ -258,6 +262,7 @@ struct StatCell: View {
 }
 
 struct MiniStat: View {
+    @EnvironmentObject var display: AppDisplaySettings
     let title: String
     let value: String
     var body: some View {
@@ -273,6 +278,7 @@ struct MiniStat: View {
 }
 
 struct ShortcutButton: View {
+    @EnvironmentObject var display: AppDisplaySettings
     let title: String
     let icon: String
     let action: () -> Void

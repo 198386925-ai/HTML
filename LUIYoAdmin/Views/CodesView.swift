@@ -186,6 +186,7 @@ struct CodesView: View {
 }
 
 struct LabeledField: View {
+    @EnvironmentObject var display: AppDisplaySettings
     let label: String
     var hint: String? = nil
     let placeholder: String
