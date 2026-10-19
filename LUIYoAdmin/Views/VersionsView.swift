@@ -39,6 +39,7 @@ struct VersionsView: View {
                     .listRowSeparator(.hidden)
                     if let e = error {
                         Text(e).foregroundColor(.red).font(display.fFootnote)
+                            .font(display.fBody)
                             .listRowSeparator(.hidden)
                     }
                 }
@@ -49,6 +50,7 @@ struct VersionsView: View {
                             .listRowSeparator(.hidden)
                     } else if list.isEmpty {
                         Text("暂无记录。请先添加需要管控的旧版本号。")
+                            .font(display.fBody)
                             .foregroundColor(.secondary).font(display.fFootnote)
                             .listRowSeparator(.hidden)
                     } else {
@@ -56,6 +58,7 @@ struct VersionsView: View {
                             VStack(alignment: .leading, spacing: 3) {
                                 HStack {
                                     Text(v.version).font(.system(.headline))
+                                        .font(display.fBody)
                                     Spacer()
                                     Text(v.blocked ? "已禁用" : "允许")
                                         .font(display.fCaption)
@@ -66,9 +69,11 @@ struct VersionsView: View {
                                 }
                                 if !v.message.isEmpty {
                                     Text("提示：" + v.message).font(display.fCaption).foregroundColor(.secondary)
+                                        .font(display.fBody)
                                 }
                                 if !v.note.isEmpty {
                                     Text("原因：" + v.note).font(display.fCaption).foregroundColor(.secondary)
+                                        .font(display.fBody)
                                 }
                             }
                             .listRowSeparator(.hidden)

@@ -99,13 +99,16 @@ struct DevicesView: View {
                                 }
                                 if templateStore.active.has(.status) {
                                     Text(d.status).font(display.fCaption).foregroundColor(statusColor(d.status))
+                                        .font(display.fBody)
                                 }
                                 if templateStore.active.has(.license), let l = d.label, !l.isEmpty {
                                     Text(l).font(display.fCaption).foregroundColor(.secondary)
+                                        .font(display.fBody)
                                 }
                                 Spacer()
                                 if templateStore.active.has(.online) {
                                     Text(d.online ? "●" : "○").font(display.fCaption)
+                                        .font(display.fBody)
                                         .foregroundColor(d.online ? .green : .secondary)
                                 }
                                 if templateStore.active.has(.actions) {
@@ -164,8 +167,10 @@ struct DevicesView: View {
                                             if templateStore.active.has(.created) {
                                                 HStack {
                                                     Text("首次登记 " + d.createdAtText)
+                                                        .font(display.fBody)
                                                     if d.installationCount > 1 {
                                                         Text("· 安装记录 " + d.installationCodes.joined(separator: "、"))
+                                                            .font(display.fBody)
                                                     }
                                                 }
                                                 .font(display.fCaption2).foregroundColor(.secondary)
@@ -222,8 +227,10 @@ struct DevicesView: View {
                             }
                             HStack {
                                 Text(d.authMode)
+                                    .font(display.fBody)
                                 Spacer()
                                 Text("活跃 " + d.lastSeenText)
+                                    .font(display.fBody)
                             }
                             .font(display.fCaption).foregroundColor(.secondary)
                         }
@@ -280,6 +287,7 @@ struct DevicesView: View {
             } message: {
                 if let d = modifyTarget {
                     Text("修改设备 \(d.deviceCode) 的设备码：\n输入新的设备码（例如 D-000002）")
+                        .font(display.fBody)
                 }
             }
             // 封禁原因
