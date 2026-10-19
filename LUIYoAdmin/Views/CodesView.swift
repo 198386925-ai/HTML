@@ -3,7 +3,6 @@ import SwiftUI
 /// 生成激活码：与网页 codes 面板一致
 /// 备注 / 设备数上限 / 有效天数（0为永久） / 生成数量 + 批量生成 + 近期生成记录
 struct CodesView: View {
-    @EnvironmentObject var display: AppDisplaySettings
     @EnvironmentObject var api: AdminAPI
     @State private var label = ""
     @State private var quantity = "1"
@@ -20,12 +19,13 @@ struct CodesView: View {
             List {
                 Section {
                     Text("每次可生成 1–100 个，0 天表示永久。新卡密只在当前设备保留近期记录，请及时复制备份。")
-                        .font(display.font(for: .caption)).foregroundColor(.secondary)
+                        .font(.caption).foregroundColor(.secondary)
                         .listRowSeparator(.hidden)
                 }
 
                 Section("生成激活码") {
                     LabeledField(label: "备注", placeholder: "例如：张三", text: $label)
+                        .padding(.top, 6)
                     LabeledField(label: "设备数上限", placeholder: "1", text: $maxDevices)
                         .keyboardType(.numberPad)
                     LabeledField(label: "有效天数", hint: "0 为永久", placeholder: "0", text: $days)
@@ -37,7 +37,7 @@ struct CodesView: View {
                         .frame(maxWidth: .infinity)
                         .listRowSeparator(.hidden)
                     if let e = error {
-                        Text(e).foregroundColor(.red).font(display.font(for: .footnote))
+                        Text(e).foregroundColor(.red).font(.footnote)
                             .listRowSeparator(.hidden)
                     }
                 }
@@ -45,14 +45,14 @@ struct CodesView: View {
                 if !history.isEmpty {
                     Section {
                         HStack {
-                            Text("近期生成记录").font(display.font(for: .headline))
+                            Text("近期生成记录").font(.headline)
                             Spacer()
                             Button(selected.count == history.count ? "取消全选" : "全选") {
                                 selected = selected.count == history.count ? [] : Set(history.map(\.id))
                             }
-                            .font(display.font(for: .subheadline))
+                            .font(.subheadline)
                             Button("批量复制") { copySelected() }
-                                .font(display.font(for: .subheadline))
+                                .font(.subheadline)
                                 .disabled(selected.isEmpty)
                         }
                         .listRowSeparator(.hidden)
@@ -61,11 +61,11 @@ struct CodesView: View {
                         Section {
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(dateStr(batch.date)).font(display.font(for: .subheadline)).bold()
+                                    Text(dateStr(batch.date)).font(.subheadline).bold()
                                     Text("设备上限 \(batch.maxDevices) · \(batch.days == 0 ? "永久" : "\(batch.days) 天") · \(batch.codes.count) 条")
-                                        .font(display.font(for: .caption)).foregroundColor(.secondary)
+                                        .font(.caption).foregroundColor(.secondary)
                                     if !batch.label.isEmpty {
-                                        Text(batch.label).font(display.font(for: .caption)).foregroundColor(.secondary)
+                                        Text(batch.label).font(.caption).foregroundColor(.secondary)
                                     }
                                 }
                                 Spacer()
@@ -77,7 +77,7 @@ struct CodesView: View {
                                     }
                                 } label: {
                                     Image(systemName: "trash")
-                                        .font(display.font(for: .subheadline))
+                                        .font(.subheadline)
                                         .foregroundColor(.red)
                                 }
                                 .buttonStyle(.plain)
@@ -104,7 +104,7 @@ struct CodesView: View {
                                     Text(c).font(.system(.caption)).textSelection(.enabled)
                                     Spacer()
                                     Button { UIPasteboard.general.string = c } label: {
-                                        Image(systemName: "doc.on.doc").font(display.font(for: .caption))
+                                        Image(systemName: "doc.on.doc").font(.caption)
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -118,12 +118,12 @@ struct CodesView: View {
                     }
                     Section {
                         Text("安全提示：旧卡密数据库只保存不可逆哈希，无法恢复明文。近期记录保存在本机，请及时复制到安全位置。")
-                            .font(display.font(for: .caption)).foregroundColor(.secondary)
+                            .font(.caption).foregroundColor(.secondary)
                             .listRowSeparator(.hidden)
                     }
                 } else {
                     Section("近期生成记录") {
-                        Text("暂时没有生成的卡密。").font(display.font(for: .footnote)).foregroundColor(.secondary)
+                        Text("暂时没有生成的卡密。").font(.footnote).foregroundColor(.secondary)
                             .listRowSeparator(.hidden)
                     }
                 }
@@ -194,9 +194,9 @@ struct LabeledField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 3) {
-                Text(label).font(display.font(for: .subheadline))
+                Text(label).font(.subheadline)
                 if let h = hint {
-                    Text(h).font(display.font(for: .caption)).foregroundColor(.secondary)
+                    Text(h).font(.caption).foregroundColor(.secondary)
                 }
             }
             TextField(placeholder, text: $text)

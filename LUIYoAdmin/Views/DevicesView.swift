@@ -72,7 +72,7 @@ struct DevicesView: View {
                         .disabled(grantBusy || grantCode.isEmpty)
                     }
                     Text("输入已登记设备的完整编号；新版 App 联网后自动领取，不会覆盖已有卡密授权。")
-                        .font(display.font(for: .caption)).foregroundColor(.secondary)
+                        .font(.caption).foregroundColor(.secondary)
                 }
 
                 // 设备与在线用户
@@ -87,7 +87,7 @@ struct DevicesView: View {
                     }
                     .pickerStyle(.segmented)
                     Text("未授权可登记设备，首页功能仍需激活。设备码为安装标识。旧版 App 记录在下方授权设备列表保留。每 10 秒自动刷新。")
-                        .font(display.font(for: .caption)).foregroundColor(.secondary)
+                        .font(.caption).foregroundColor(.secondary)
                 }
 
                 // 设备卡片列表
@@ -102,14 +102,14 @@ struct DevicesView: View {
                                         .fontWeight(.semibold)
                                 }
                                 if templateStore.active.has(.status) {
-                                    Text(d.status).font(display.font(for: .caption)).foregroundColor(statusColor(d.status))
+                                    Text(d.status).font(.caption).foregroundColor(statusColor(d.status))
                                 }
                                 if templateStore.active.has(.license), let l = d.label, !l.isEmpty {
-                                    Text(l).font(display.font(for: .caption)).foregroundColor(.secondary)
+                                    Text(l).font(.caption).foregroundColor(.secondary)
                                 }
                                 Spacer()
                                 if templateStore.active.has(.online) {
-                                    Text(d.online ? "●" : "○").font(display.font(for: .caption))
+                                    Text(d.online ? "●" : "○").font(.caption)
                                         .foregroundColor(d.online ? .green : .secondary)
                                 }
                                 if templateStore.active.has(.actions) {
@@ -138,32 +138,32 @@ struct DevicesView: View {
                                     Spacer()
                                     if templateStore.active.has(.online) {
                                         Text(d.online ? "● 在线" : "离线")
-                                            .font(display.font(for: .caption))
+                                            .font(.caption)
                                             .foregroundColor(d.online ? .green : .secondary)
                                     }
                                     if templateStore.active.has(.page) {
                                         Text(d.pageName)
-                                            .font(display.font(for: .caption)).foregroundColor(.secondary)
+                                            .font(.caption).foregroundColor(.secondary)
                                     }
                                 }
                                 if templateStore.active.has(.status) || templateStore.active.has(.license) {
                                     HStack {
                                         Text(statusText(for: d))
-                                            .font(display.font(for: .caption))
+                                            .font(.caption)
                                             .foregroundColor(statusColor(d.status))
                                         Spacer()
                                     }
                                 }
                                 if templateStore.active.has(.meta) && !d.metaText.isEmpty {
                                     Text(d.metaText)
-                                        .font(display.font(for: .caption)).foregroundColor(.secondary)
+                                        .font(.caption).foregroundColor(.secondary)
                                 }
                                 if templateStore.active.has(.created) || templateStore.active.has(.actions) {
                                     HStack(alignment: .bottom) {
                                         VStack(alignment: .leading, spacing: 2) {
                                             if templateStore.active.has(.lastSeen) {
                                                 Text("活跃 " + d.lastSeenText)
-                                                    .font(display.font(for: .caption)).foregroundColor(.secondary)
+                                                    .font(.caption).foregroundColor(.secondary)
                                             }
                                             if templateStore.active.has(.created) {
                                                 HStack {
@@ -172,7 +172,7 @@ struct DevicesView: View {
                                                         Text("· 安装记录 " + d.installationCodes.joined(separator: "、"))
                                                     }
                                                 }
-                                                .font(display.font(for: .caption2)).foregroundColor(.secondary)
+                                                .font(.caption2).foregroundColor(.secondary)
                                             }
                                         }
                                         Spacer()
@@ -192,7 +192,7 @@ struct DevicesView: View {
                                                 }
                                                 .buttonStyle(.bordered)
                                             }
-                                            .font(display.font(for: .subheadline))
+                                            .font(.subheadline)
                                         }
                                     }
                                 }
@@ -213,7 +213,7 @@ struct DevicesView: View {
                                     .font(.system(.headline))
                                 Spacer()
                                 Text(d.banned ? "已封禁" : "正常")
-                                    .font(display.font(for: .caption))
+                                    .font(.caption)
                                     .foregroundColor(d.banned ? .red : .green)
                             }
                             // 卡密授权：把卡密显示在设备码下面；设备码授权：第二行显示"设备码授权"
@@ -229,7 +229,7 @@ struct DevicesView: View {
                                 Spacer()
                                 Text("活跃 " + d.lastSeenText)
                             }
-                            .font(display.font(for: .caption)).foregroundColor(.secondary)
+                            .font(.caption).foregroundColor(.secondary)
                         }
                         .listRowSeparator(.hidden)
                         .swipeActions(edge: .trailing) {
