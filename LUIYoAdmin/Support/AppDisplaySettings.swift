@@ -221,12 +221,9 @@ enum FontImporter {
     }
 }
 
-// MARK: - iOS 26 原生液态玻璃（低版本自动回退，绝不自绘）
+// MARK: - 卡片样式（用户要求去掉液态玻璃，只用白底圆角）
 extension View {
-    /// 原生液态玻璃卡片：iOS 26+ 用系统 glassEffect；低版本用系统背景+圆角+阴影（均为原生修饰符）
-    @ViewBuilder
     func glassCard(cornerRadius: CGFloat = 24) -> some View {
-        // 用户要求去掉液态玻璃，只用白底圆角
         self
             .background(Color(.systemBackground))
             .cornerRadius(cornerRadius)
