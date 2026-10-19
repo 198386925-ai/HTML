@@ -111,7 +111,7 @@ class AppDisplaySettings: ObservableObject {
         return .system(size: baseFontSize)
     }
     private func cf(_ size: CGFloat, _ style: Font.TextStyle) -> Font {
-        if let name = customFontName { return .custom(name, size: size, relativeTo: style) }
+        if let name = customFontName { return .custom(name, size: size) }
         return .system(style)
     }
     var fHeadline: Font { cf(17, .headline) }
