@@ -141,6 +141,76 @@ class AdminAPI: ObservableObject {
         guard r.ok else { throw APIError.server(r.error ?? "操作失败") }
     }
 
+    // MARK: - 上传 IPA（主 App 更新包）
+
+    struct UploadIPAResp: Decodable {
+        let ok: Bool
+        let error: String?
+        let filename: String?
+        let download_url: String?
+    }
+
+    /// 上传 IPA 到服务器。password 取 Keychain 里存的管理员密码。
+    func uploadIPA(fileURL: URL, version: String, build: String, changelog: String) async throws -> UploadIPAResp {
+        guard let password = Keychain.load(), !password.isEmpty else {
+            throw APIError.server("未保存密码，请重新登录并勾选记住密码")
+        }
+        guard let url = URL(string: base + "/upload-ipa.php") else {
+            throw APIError.server("服务器地址无效")
+        }
+        let fileData: Data
+        do {
+            fileData = try Data(contentsOf: fileURL)
+        } catch {
+            throw APIError.server("读取 IPA 文件失败")
+        }
+        let filename = fileURL.lastPathComponent
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.timeoutInterval = 120
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+        func appendField(_ name: String, _ value: String) {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n".data(using: .utf8)!)
+            body.append("\(value)\r\n".data(using: .utf8)!)
+        }
+        // 文件字段
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: application/octet-stream\r\n\r\n".data(using: .utf8)!)
+        body.append(fileData)
+        body.append("\r\n".data(using: .utf8)!)
+        // 文本字段
+        appendField("version", version)
+        appendField("build", build)
+        appendField("changelog", changelog)
+        appendField("password", password)
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+
+        let data: Data
+        let resp: URLResponse
+        do {
+            (data, resp) = try await URLSession.shared.upload(for: req, from: body)
+        } catch {
+            throw APIError.network(error)
+        }
+        guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else {
+            throw APIError.badResponse
+        }
+        do {
+            let r = try JSONDecoder().decode(UploadIPAResp.self, from: data)
+            guard r.ok else { throw APIError.server(r.error ?? "上传失败") }
+            return r
+        } catch let e as APIError {
+            throw e
+        } catch {
+            throw APIError.badResponse
+        }
+    }
+
     // MARK: - 底层
 
     private func post<T: Decodable>(action: String, params: [String: String]) async throws -> T {
