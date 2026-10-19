@@ -106,36 +106,26 @@ class AppDisplaySettings: ObservableObject {
 
     var defaultFont: Font {
         if let name = customFontName {
-            // relativeTo 让自定义字体跟随系统动态字体缩放
             return .custom(name, size: baseFontSize, relativeTo: .body)
         }
         return .system(size: baseFontSize)
     }
-
-    /// 返回适配自定义字体的 Font（用于替换所有 .font(.X)）
-    func font(for style: Font.TextStyle) -> Font {
-        guard let name = customFontName else {
-            return .system(style)
-        }
-        // TextStyle 转字符串比较（struct 不支持 ==）
-        let key = String(describing: style)
-        let size: CGFloat
-        switch key {
-        case "largeTitle": size = 34
-        case "title": size = 28
-        case "title2": size = 22
-        case "title3": size = 20
-        case "headline": size = 17
-        case "body": size = 17
-        case "callout": size = 16
-        case "subheadline": size = 15
-        case "footnote": size = 13
-        case "caption": size = 12
-        case "caption2": size = 11
-        default: size = 17
-        }
-        return .custom(name, size: size, relativeTo: style)
+    private func cf(_ size: CGFloat, _ style: Font.TextStyle) -> Font {
+        if let name = customFontName { return .custom(name, size: size, relativeTo: style) }
+        return .system(style)
     }
+    var fHeadline: Font { cf(17, .headline) }
+    var fBody: Font { cf(17, .body) }
+    var fCallout: Font { cf(16, .callout) }
+    var fSubheadline: Font { cf(15, .subheadline) }
+    var fFootnote: Font { cf(13, .footnote) }
+    var fCaption: Font { cf(12, .caption) }
+    var fCaption2: Font { cf(11, .caption2) }
+    var fTitle: Font { cf(28, .title) }
+    var fTitle2: Font { cf(22, .title2) }
+    var fTitle3: Font { cf(20, .title3) }
+    var fLargeTitle: Font { cf(34, .largeTitle) }
+
 }
 
 // TTF 字体导入器

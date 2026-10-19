@@ -104,7 +104,7 @@ struct SettingsView: View {
 
 
                     if let e = importError {
-                        Text(e).font(.caption).foregroundColor(.red)
+                        Text(e).font(display.fCaption).foregroundColor(.red)
                     }
                 }
 
@@ -118,7 +118,7 @@ struct SettingsView: View {
                         saved = true
                     }
                     if saved {
-                        Text("已保存，下次登录生效").font(.footnote).foregroundColor(.green)
+                        Text("已保存，下次登录生效").font(display.fFootnote).foregroundColor(.green)
                     }
                 }
                 Section {

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct LoginView: View {
+    @EnvironmentObject var display: AppDisplaySettings
     @EnvironmentObject var api: AdminAPI
     @State private var server = UserDefaults.standard.string(forKey: "serverBase")
         ?? "https://mistoto.cc.cd/luiyo"
@@ -23,7 +24,7 @@ struct LoginView: View {
                     Toggle("记住密码", isOn: $remember)
                 }
                 if let e = error {
-                    Section { Text(e).foregroundColor(.red).font(.footnote) }
+                    Section { Text(e).foregroundColor(.red).font(display.fFootnote) }
                 }
                 Section {
                     Button(busy ? "登录中…" : "登录") { login() }

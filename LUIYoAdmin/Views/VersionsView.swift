@@ -3,6 +3,7 @@ import SwiftUI
 /// 版本控制：与网页 versions 面板一致
 /// 登记/禁用版本（版本号/提示文案/原因/立即禁用）+ 已登记版本（版本/状态/提示/原因/操作）
 struct VersionsView: View {
+    @EnvironmentObject var display: AppDisplaySettings
     @EnvironmentObject var api: AdminAPI
     @State private var list: [AppVersion] = []
     @State private var loading = false
@@ -18,7 +19,7 @@ struct VersionsView: View {
             List {
                 Section("登记 / 禁用版本") {
                     Text("客户端联网后会自动同步版本号到本页。新版本出现后可直接禁用或恢复；禁用后所有该版本 App 无法使用并提示下载正版。也可手动补登记。")
-                        .font(.caption).foregroundColor(.secondary)
+                        .font(display.fCaption).foregroundColor(.secondary)
                         .listRowSeparator(.hidden)
                     LabeledField(label: "版本号", placeholder: "例如 1.0.5", text: $version)
                         .autocapitalization(.none)
@@ -34,7 +35,7 @@ struct VersionsView: View {
                     .frame(maxWidth: .infinity)
                     .listRowSeparator(.hidden)
                     if let e = error {
-                        Text(e).foregroundColor(.red).font(.footnote)
+                        Text(e).foregroundColor(.red).font(display.fFootnote)
                             .listRowSeparator(.hidden)
                     }
                 }
@@ -45,7 +46,7 @@ struct VersionsView: View {
                             .listRowSeparator(.hidden)
                     } else if list.isEmpty {
                         Text("暂无记录。请先添加需要管控的旧版本号。")
-                            .foregroundColor(.secondary).font(.footnote)
+                            .foregroundColor(.secondary).font(display.fFootnote)
                             .listRowSeparator(.hidden)
                     } else {
                         ForEach(list) { v in
@@ -54,17 +55,17 @@ struct VersionsView: View {
                                     Text(v.version).font(.system(.headline))
                                     Spacer()
                                     Text(v.blocked ? "已禁用" : "允许")
-                                        .font(.caption)
+                                        .font(display.fCaption)
                                         .padding(.horizontal, 8).padding(.vertical, 3)
                                         .background(v.blocked ? Color.red.opacity(0.15) : Color.green.opacity(0.15))
                                         .foregroundColor(v.blocked ? .red : .green)
                                         .cornerRadius(8)
                                 }
                                 if !v.message.isEmpty {
-                                    Text("提示：" + v.message).font(.caption).foregroundColor(.secondary)
+                                    Text("提示：" + v.message).font(display.fCaption).foregroundColor(.secondary)
                                 }
                                 if !v.note.isEmpty {
-                                    Text("原因：" + v.note).font(.caption).foregroundColor(.secondary)
+                                    Text("原因：" + v.note).font(display.fCaption).foregroundColor(.secondary)
                                 }
                             }
                             .listRowSeparator(.hidden)

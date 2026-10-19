@@ -3,6 +3,7 @@ import SwiftUI
 /// 总览首页：现代仪表盘风格
 /// 统计卡片（4项）+ 设备状态（3项）+ 快捷入口（4个）
 struct OverviewView: View {
+    @EnvironmentObject var display: AppDisplaySettings
     @EnvironmentObject var api: AdminAPI
     @Binding var tab: AdminTab
     @State private var stats: Stats?
@@ -19,15 +20,15 @@ struct OverviewView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("LUIYo 后台")
-                                .font(.title2).bold()
+                                .font(display.fTitle2).bold()
                             Text(currentDateString)
-                                .font(.subheadline)
+                                .font(display.fSubheadline)
                                 .foregroundColor(.secondary)
                         }
                         Spacer()
                         Button { showSettings = true } label: {
                             Image(systemName: "gearshape.fill")
-                                .font(.title3)
+                                .font(display.fTitle3)
                                 .foregroundColor(.secondary)
                                 .padding(8)
                                 .nativeCapsuleGlass()
@@ -69,10 +70,10 @@ struct OverviewView: View {
                         VStack(spacing: 0) {
                             HStack {
                                 Text("设备状态")
-                                    .font(.headline)
+                                    .font(display.fHeadline)
                                 Spacer()
                                 Button("查看全部 ›") { tab = .devices }
-                                    .font(.subheadline)
+                                    .font(display.fSubheadline)
                                     .foregroundColor(.blue)
                             }
                             .padding(.bottom, 8)
@@ -105,7 +106,7 @@ struct OverviewView: View {
                     // 快捷入口
                     VStack(alignment: .leading, spacing: 8) {
                         Text("快捷入口")
-                            .font(.headline)
+                            .font(display.fHeadline)
                             .padding(.horizontal, 2)
 
                         LazyVGrid(columns: columns, spacing: 8) {
@@ -127,7 +128,7 @@ struct OverviewView: View {
                     if let e = error {
                         Text(e)
                             .foregroundColor(.red)
-                            .font(.footnote)
+                            .font(display.fFootnote)
                             .padding(8)
                     }
                 }
@@ -171,7 +172,7 @@ struct DashboardStatCard: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Image(systemName: icon)
-                    .font(.body)
+                    .font(display.fBody)
                     .foregroundColor(.white)
                     .padding(6)
                     .background(color)
@@ -181,7 +182,7 @@ struct DashboardStatCard: View {
             Text(value)
                 .font(.system(size: 22, weight: .bold))
             Text(title)
-                .font(.subheadline)
+                .font(display.fSubheadline)
                 .foregroundColor(.secondary)
         }
         .padding(10)
@@ -199,10 +200,10 @@ struct DeviceStatusPill: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.title3).bold()
+                .font(display.fTitle3).bold()
                 .foregroundColor(color)
             Text(title)
-                .font(.caption)
+                .font(display.fCaption)
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -222,14 +223,14 @@ struct QuickActionCard: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Image(systemName: icon)
-                    .font(.title2)
+                    .font(display.fTitle2)
                     .foregroundColor(color)
                 Text(title)
-                    .font(.headline)
+                    .font(display.fHeadline)
                     .foregroundColor(.primary)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.caption)
+                    .font(display.fCaption)
                     .foregroundColor(.secondary)
             }
             .padding(12)
@@ -246,8 +247,8 @@ struct StatCell: View {
     let value: String
     var body: some View {
         VStack(spacing: 4) {
-            Text(title).font(.caption).foregroundColor(.secondary)
-            Text(value).font(.title2).bold()
+            Text(title).font(display.fCaption).foregroundColor(.secondary)
+            Text(value).font(display.fTitle2).bold()
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
@@ -261,8 +262,8 @@ struct MiniStat: View {
     let value: String
     var body: some View {
         VStack(spacing: 4) {
-            Text(title).font(.caption2).foregroundColor(.secondary)
-            Text(value).font(.headline)
+            Text(title).font(display.fCaption2).foregroundColor(.secondary)
+            Text(value).font(display.fHeadline)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)

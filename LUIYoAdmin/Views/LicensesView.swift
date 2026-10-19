@@ -3,6 +3,7 @@ import SwiftUI
 /// 卡密管理：与网页 licenses 面板一致
 /// 卡密 #id · 设备码 / 状态 / 停用·启用·授权·删除 / 明文+复制 / 备注 / 设备数 / 到期
 struct LicensesView: View {
+    @EnvironmentObject var display: AppDisplaySettings
     @EnvironmentObject var api: AdminAPI
     @State private var list: [License] = []
     @State private var loading = false
@@ -32,10 +33,10 @@ struct LicensesView: View {
                             // 标题：卡密 #id · 设备码 D-xxx、D-xxx
                             HStack {
                                 Text("#\(lic.id)" + (lic.deviceCount > 0 && !lic.deviceCodes.isEmpty ? " · 设备码 " + lic.deviceCodes.joined(separator: "、") : ""))
-                                    .font(.headline)
+                                    .font(display.fHeadline)
                                 Spacer()
                                 Text(lic.statusText)
-                                    .font(.caption)
+                                    .font(display.fCaption)
                                     .padding(.horizontal, 8).padding(.vertical, 3)
                                     .background(statusBg(lic.statusText))
                                     .foregroundColor(statusFg(lic.statusText))
@@ -47,11 +48,11 @@ struct LicensesView: View {
                                     Text(code).font(.system(.caption)).textSelection(.enabled)
                                     Spacer()
                                     Button { UIPasteboard.general.string = code } label: {
-                                        Image(systemName: "doc.on.doc").font(.caption)
+                                        Image(systemName: "doc.on.doc").font(display.fCaption)
                                     }
                                 }
                             } else {
-                                Text("历史卡密明文不可恢复").font(.caption).foregroundColor(.secondary)
+                                Text("历史卡密明文不可恢复").font(display.fCaption).foregroundColor(.secondary)
                             }
                             // 备注 + 设备码授权 badge
                             HStack {
@@ -61,15 +62,15 @@ struct LicensesView: View {
                                         .foregroundColor(.blue).bold()
                                 }
                             }
-                            .font(.caption).foregroundColor(.secondary)
+                            .font(display.fCaption).foregroundColor(.secondary)
                             // 设备数 / 到期
                             HStack {
-                                Text("设备 \(lic.deviceCount)/\(lic.maxDevices)").font(.caption)
+                                Text("设备 \(lic.deviceCount)/\(lic.maxDevices)").font(display.fCaption)
                                 Spacer()
                                 if let e = lic.expiresAt {
-                                    Text("到期 " + dateStr(e)).font(.caption)
+                                    Text("到期 " + dateStr(e)).font(display.fCaption)
                                 } else {
-                                    Text("永久").font(.caption)
+                                    Text("永久").font(display.fCaption)
                                 }
                             }
                             .foregroundColor(.secondary)
