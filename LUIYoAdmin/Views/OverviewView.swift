@@ -97,7 +97,7 @@ struct OverviewView: View {
                             }
                         }
                         .padding(10)
-                        .glassCard(cornerRadius: 24)
+                        .background(Color(.systemBackground)).cornerRadius(24).shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
                     } else {
                         ProgressView()
                             .frame(maxWidth: .infinity, minHeight: 160)
@@ -188,7 +188,7 @@ struct DashboardStatCard: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassCard(cornerRadius: 24)
+        .background(Color(.systemBackground)).cornerRadius(24).shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 }
 
@@ -210,7 +210,7 @@ struct DeviceStatusPill: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .glassCard(cornerRadius: 20)
+        .background(Color(.systemBackground)).cornerRadius(20).shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 }
 
@@ -238,7 +238,7 @@ struct QuickActionCard: View {
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .glassCard(cornerRadius: 24)
+            .background(Color(.systemBackground)).cornerRadius(24).shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
         }
         .buttonStyle(.plain)
     }
