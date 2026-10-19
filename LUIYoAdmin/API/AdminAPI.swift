@@ -16,7 +16,7 @@ enum APIError: LocalizedError {
     }
 }
 
-/// 后台管理接口客户端（api-native.php，session 会话鉴权）
+/// 后台管理接口客户端（api-native-v2.php，session 会话鉴权）
 @MainActor
 class AdminAPI: ObservableObject {
     static let shared = AdminAPI()
@@ -144,7 +144,7 @@ class AdminAPI: ObservableObject {
     // MARK: - 底层
 
     private func post<T: Decodable>(action: String, params: [String: String]) async throws -> T {
-        guard let url = URL(string: base + "/api-native.php") else {
+        guard let url = URL(string: base + "/api-native-v2.php") else {
             throw APIError.server("服务器地址无效")
         }
         var req = URLRequest(url: url)
