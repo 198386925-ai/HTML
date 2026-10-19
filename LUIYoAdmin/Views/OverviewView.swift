@@ -44,7 +44,7 @@ struct OverviewView: View {
                         LazyVGrid(columns: columns, spacing: 12) {
                             NewStatCard(title: "累计激活设备", value: "\(s.totalDevices)", icon: "iphone", color: .blue)
                             NewStatCard(title: "今日活跃", value: "\(s.activeToday)", icon: "bolt.fill", color: .green)
-                            NewStatCard(title: "近7日活跃", value: "\(s.active7d)", icon: "chart.bar.fill", color: .orange)
+                            NewStatCard(title: "近7日活跃", value: "\(s.activeWeek)", icon: "chart.bar.fill", color: .orange)
                             NewStatCard(title: "已封禁设备", value: "\(s.banned)", icon: "nosign", color: .red)
                         }
 
@@ -52,9 +52,9 @@ struct OverviewView: View {
                         VStack(spacing: 0) {
                             NewStatusRow(label: "登记设备", value: "\(s.totalDevices)", color: .blue)
                             Divider().padding(.leading, 16)
-                            NewStatusRow(label: "当前在线", value: "\(s.onlineNow)", color: .green)
+                            NewStatusRow(label: "当前在线", value: "\(s.online)", color: .green)
                             Divider().padding(.leading, 16)
-                            NewStatusRow(label: "未授权", value: "\(s.unauthorized)", color: .orange)
+                            NewStatusRow(label: "未授权", value: "\(s.unlicensed)", color: .orange)
                         }
                         .background(Color(.systemBackground))
                         .cornerRadius(20)
