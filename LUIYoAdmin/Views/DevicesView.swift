@@ -57,22 +57,26 @@ struct DevicesView: View {
             List {
                 // 设备码授权
                 Section("设备码授权") {
-                    TextField("D-000001", text: $grantCode)
-                        .autocapitalization(.allCharacters)
-                        .disableAutocorrection(true)
-                        .font(.system(.body))
-                    HStack {
-                        Button(grantBusy ? "处理中…" : "授权 SVIP 3") {
+                    HStack(spacing: 8) {
+                        TextField("D-000001", text: $grantCode)
+                            .autocapitalization(.allCharacters)
+                            .disableAutocorrection(true)
+                            .font(display.fBody)
+                            .padding(.horizontal, 12)
+                            .frame(height: 40)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(20)
+                        Button(grantBusy ? "处理中…" : "授权") {
                             grantOp(op: "grant")
                         }
                         .disabled(grantBusy || grantCode.isEmpty)
-                        Button("撤销", role: .destructive) {
-                            grantOp(op: "revoke")
-                        }
-                        .disabled(grantBusy || grantCode.isEmpty)
+                        .padding(.horizontal, 16)
+                        .frame(height: 40)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(20)
                     }
-                    Text("输入已登记设备的完整编号；新版 App 联网后自动领取，不会覆盖已有卡密授权。")
-                        .font(display.fCaption).foregroundColor(.secondary)
+
                 }
 
                 // 设备与在线用户
@@ -86,8 +90,6 @@ struct DevicesView: View {
                         ForEach(filters, id: \.0) { Text($0.1).tag($0.0) }
                     }
                     .pickerStyle(.segmented)
-                    Text("未授权可登记设备，首页功能仍需激活。设备码为安装标识。旧版 App 记录在下方授权设备列表保留。每 10 秒自动刷新。")
-                        .font(display.fCaption).foregroundColor(.secondary)
                 }
 
                 // 设备卡片列表

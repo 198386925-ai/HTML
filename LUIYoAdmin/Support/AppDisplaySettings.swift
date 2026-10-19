@@ -226,14 +226,11 @@ extension View {
     /// 原生液态玻璃卡片：iOS 26+ 用系统 glassEffect；低版本用系统背景+圆角+阴影（均为原生修饰符）
     @ViewBuilder
     func glassCard(cornerRadius: CGFloat = 24) -> some View {
-        if #available(iOS 26, *) {
-            self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius))
-        } else {
-            self
-                .background(Color(.systemBackground))
-                .cornerRadius(cornerRadius)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-        }
+        // 用户要求去掉液态玻璃，只用白底圆角
+        self
+            .background(Color(.systemBackground))
+            .cornerRadius(cornerRadius)
+            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 
     /// 原生液态玻璃胶囊：iOS 26+ 用系统 glassEffect；低版本保持原样

@@ -18,8 +18,7 @@ struct VersionsView: View {
         NavigationView {
             List {
                 Section("登记 / 禁用版本") {
-                    Text("客户端联网后会自动同步版本号到本页。新版本出现后可直接禁用或恢复；禁用后所有该版本 App 无法使用并提示下载正版。也可手动补登记。")
-                        .font(display.fCaption).foregroundColor(.secondary)
+                    
                         .listRowSeparator(.hidden)
                     LabeledField(label: "版本号", placeholder: "例如 1.0.5", text: $version)
                         .autocapitalization(.none)
