@@ -56,18 +56,19 @@ struct DevicesView: View {
         NavigationView {
             List {
                 // 设备码授权
-                Section("设备码授权") {
-                    HStack(spacing: 8) {
+                Section {
+                    HStack {
                         TextField("D-000001", text: $grantCode)
                             .autocapitalization(.allCharacters)
                             .disableAutocorrection(true)
-                            .font(display.fBody)
                         Button(grantBusy ? "处理中…" : "授权") {
                             grantOp(op: "grant")
                         }
                         .disabled(grantBusy || grantCode.isEmpty)
                     }
-
+                    .font(display.fBody)
+                } header: {
+                    Text("设备码授权")
                 }
 
                 // 设备与在线用户
