@@ -191,11 +191,28 @@ struct VersionsView: View {
                     if let url = url {
                         if url.pathExtension.lowercased() == "ipa" {
                             ipaURL = url
+                            autoFillFromFilename(url.lastPathComponent)
                         } else {
                             uploadError = "请选择 .ipa 文件"
                         }
                     }
                 }
+            }
+        }
+    }
+
+    /// 从文件名如 LUIYo-1.0.7-1-Build(16).ipa 自动填版本号和构建号
+    private func autoFillFromFilename(_ name: String) {
+        // 匹配 -Build(数字).ipa
+        if let r = name.range(of: "-Build(", options: .backwards),
+           let end = name[r.upperBound...].firstIndex(of: ")") {
+            let buildStr = String(name[r.upperBound..<end])
+            if ipaBuild.isEmpty { ipaBuild = buildStr }
+            // 版本号：取 -Build( 之前的最后一节
+            let prefix = String(name[..<r.lowerBound])
+            if let dash = prefix.range(of: "-", options: .backwards) {
+                let ver = String(prefix[dash.upperBound...])
+                if ipaVersion.isEmpty { ipaVersion = ver }
             }
         }
     }
