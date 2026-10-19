@@ -18,13 +18,17 @@ struct VersionsView: View {
         NavigationView {
             List {
                 Section("登记 / 禁用版本") {
-                    
-                        .listRowSeparator(.hidden)
                     LabeledField(label: "版本号", placeholder: "例如 1.0.5", text: $version)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
                         .autocapitalization(.none)
                         .disableAutocorrection(true)
                     LabeledField(label: "提示文案", placeholder: "请下载正版使用", text: $message)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
                     LabeledField(label: "原因", placeholder: "可选", text: $note)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
                     Toggle("立即禁用此版本", isOn: $blockNow)
                         .listRowSeparator(.hidden)
                     Button(busy ? "处理中…" : "保存版本") {

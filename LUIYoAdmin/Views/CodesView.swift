@@ -26,12 +26,20 @@ struct CodesView: View {
 
                 Section("生成激活码") {
                     LabeledField(label: "备注", placeholder: "例如：张三", text: $label)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
                         .padding(.top, 6)
                     LabeledField(label: "设备数上限", placeholder: "1", text: $maxDevices)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
                         .keyboardType(.numberPad)
                     LabeledField(label: "有效天数", hint: "0 为永久", placeholder: "0", text: $days)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
                         .keyboardType(.numberPad)
                     LabeledField(label: "生成数量", placeholder: "1", text: $quantity)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
                         .keyboardType(.numberPad)
                     Button(busy ? "生成中…" : "批量生成卡密") { generate() }
                         .disabled(busy)
@@ -209,8 +217,6 @@ struct LabeledField: View {
                 .cornerRadius(20)
                 .keyboardType(kbType)
         }
-        .listRowSeparator(.hidden)
-        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 4, trailing: 16))
     }
 
     func keyboardType(_ t: UIKeyboardType) -> LabeledField {
