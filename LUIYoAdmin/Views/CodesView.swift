@@ -18,12 +18,6 @@ struct CodesView: View {
     var body: some View {
         NavigationView {
             List {
-                Section {
-                    Text("每次可生成 1–100 个，0 天表示永久。新卡密只在当前设备保留近期记录，请及时复制备份。")
-                        .font(display.fCaption).foregroundColor(.secondary)
-                        .listRowSeparator(.hidden)
-                }
-
                 Section("生成激活码") {
                     LabeledField(label: "备注", placeholder: "例如：张三", text: $label)
                         .listRowSeparator(.hidden)

@@ -149,6 +149,7 @@ struct SettingsView: View {
                     let (name, error) = display.importFontDetailed(from: url)
                     if let name = name {
                         importMessage = "导入成功"
+                        display.useFont(name)  // 导入后自动选中
                     } else {
                         importMessage = "导入失败"
                     }
