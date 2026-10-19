@@ -62,7 +62,7 @@ struct OverviewView: View {
 
                         // 快捷入口
                         VStack(spacing: 8) {
-                            NewActionButton(icon: "plus.circle.fill", color: .blue, title: "生成卡密") { tab = .generate }
+                            NewActionButton(icon: "plus.circle.fill", color: .blue, title: "生成卡密") { tab = .codes }
                             NewActionButton(icon: "iphone", color: .green, title: "设备管理") { tab = .devices }
                             NewActionButton(icon: "ticket.fill", color: .orange, title: "卡密管理") { tab = .codes }
                             NewActionButton(icon: "arrow.clockwise", color: .purple, title: "刷新数据") { Task { await load() } }

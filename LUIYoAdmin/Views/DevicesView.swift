@@ -44,9 +44,11 @@ struct DevicesView: View {
     }
 
     var legacyFiltered: [LegacyDevice] {
-        guard !query.isEmpty else { return legacyList }
+        // 只显示有设备码的，过滤掉未登记的卡密记录
+        let withCode = legacyList.filter { $0.deviceCode != nil }
+        guard !query.isEmpty else { return withCode }
         let q = query.lowercased()
-        return legacyList.filter {
+        return withCode.filter {
             ($0.deviceCode ?? "").lowercased().contains(q)
             || $0.authMode.lowercased().contains(q)
         }
