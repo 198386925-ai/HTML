@@ -211,66 +211,6 @@ class AdminAPI: ObservableObject {
         }
     }
 
-    // MARK: - 邮箱账号（新域名 user-auth-v2.php）
-
-    /// 账号系统接口地址（新域名，与老后台分开）
-    static let accountBase = "https://luioe.bbroot.com"
-
-    func accounts() async throws -> [AccountUser] {
-        let r: AccountsResp = try await accountPost(action: "admin_list", params: [:])
-        guard r.ok, let list = r.users else { throw APIError.server(r.error ?? "获取失败") }
-        return list
-    }
-
-    func accountBan(email: String, ban: Bool, reason: String = "") async throws {
-        var p = ["email": email, "ban": ban ? "1" : "0"]
-        if !reason.isEmpty { p["reason"] = reason }
-        let r: SimpleResp = try await accountPost(action: "admin_ban", params: p)
-        guard r.ok else { throw APIError.server(r.error ?? "操作失败") }
-    }
-
-    func accountJailbreak(email: String, allow: Bool) async throws {
-        let r: SimpleResp = try await accountPost(action: "admin_jailbreak", params: ["email": email, "allow": allow ? "1" : "0"])
-        guard r.ok else { throw APIError.server(r.error ?? "操作失败") }
-    }
-
-    func accountUnflag(email: String) async throws {
-        let r: SimpleResp = try await accountPost(action: "admin_unflag", params: ["email": email])
-        guard r.ok else { throw APIError.server(r.error ?? "操作失败") }
-    }
-
-    /// 账号接口走 JSON + 管理员密码（Keychain 里存的那个），与老后台的 session 鉴权分开
-    private func accountPost<T: Decodable>(action: String, params: [String: String]) async throws -> T {
-        guard let password = Keychain.load(), !password.isEmpty else {
-            throw APIError.server("未保存密码，请重新登录并勾选记住密码")
-        }
-        guard let url = URL(string: Self.accountBase + "/user-auth-v2.php?action=" + action) else {
-            throw APIError.server("服务器地址无效")
-        }
-        var all = params
-        all["password"] = password
-        var req = URLRequest(url: url)
-        req.httpMethod = "POST"
-        req.timeoutInterval = 25
-        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.httpBody = try JSONSerialization.data(withJSONObject: all)
-        let data: Data
-        let resp: URLResponse
-        do {
-            (data, resp) = try await URLSession.shared.data(for: req)
-        } catch {
-            throw APIError.network(error)
-        }
-        guard let http = resp as? HTTPURLResponse else { throw APIError.badResponse }
-        if http.statusCode == 401 { throw APIError.server("账号后台密码验证失败") }
-        guard http.statusCode == 200 else { throw APIError.badResponse }
-        do {
-            return try JSONDecoder().decode(T.self, from: data)
-        } catch {
-            throw APIError.badResponse
-        }
-    }
-
     // MARK: - 底层
 
     private func post<T: Decodable>(action: String, params: [String: String]) async throws -> T {

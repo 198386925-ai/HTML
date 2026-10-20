@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// 6 个面板：总览 / 生成 / 设备 / 卡密 / 版本 / 账号（邮箱账号新系统）
+/// 5 个面板与网页后台完全一致：总览 / 生成 / 设备 / 卡密 / 版本
 enum AdminTab: Int {
-    case overview, codes, devices, licenses, versions, accounts
+    case overview, codes, devices, licenses, versions
 }
 
 struct ContentView: View {
@@ -45,12 +45,6 @@ struct ContentView: View {
                             Text("版本")
                         }
                         .tag(AdminTab.versions)
-                    AccountsView()
-                        .tabItem {
-                            Image("TabAccounts")
-                            Text("账号")
-                        }
-                        .tag(AdminTab.accounts)
                 }
             } else if autoLoginAttempted {
                 // 自动登录中，显示 loading（比登录页闪一下更快）
