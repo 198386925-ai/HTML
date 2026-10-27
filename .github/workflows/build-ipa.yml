@@ -1,10 +1,3 @@
-# STAGED COPY ONLY — DO NOT PUSH THIS FILE VIA THE GITHUB API.
-# The stored GitHub token is repo-scope only (no workflow scope), so an
-# API push of .github/workflows/* returns 404. Add this file in the
-# GitHub web UI instead (repository -> Add file -> Create new file, or
-# edit the existing build-ipa.yml there), pasting the content below
-# the comment lines. It is the existing LUIYoAdmin workflow with only
-# the app/project/IPA names changed to HTML; everything else is kept.
 name: Build HTML IPA
 
 on:
