@@ -1,28 +1,59 @@
 import UIKit
 
-// MARK: - GlassCapsuleView (Build 3: solid colour, no glass)
+// MARK: - GlassCapsuleView (Build 8: native liquid glass capsule)
 //
-// Build 3 supersedes the liquid-glass requirement for the capsules,
-// per the user's device test of Build 2 ("改纯色啊"):
-// Build 2 removed all backgrounds, so in system dark mode the whole
-// page was black, the dark capsule was invisible except floating
-// text/icons, and dark-grey top text on black was unreadable.
+// Build 8 correction, per the user's follow-up ("在这两个位置加一个
+// 原生液态玻璃的胶囊卡片，不要自绘的"): the two preview positions —
+// light on top, dark below — are each a NATIVE liquid-glass capsule
+// card, not a solid colour and not a fully transparent nothing.
+// This supersedes the first Build 8 draft's fully-transparent capsule.
 //
-// This view is now a flat solid-colour capsule, full stop:
-// * Light capsule: solid white background.
-// * Dark capsule: solid black background.
-// * No UIGlassEffect, no UIVisualEffectView, no transparency.
-// * No gradient, no shadow, no highlight, no border drawn to
-//   simulate glass — solid colour only, flat.
+// Native only, no self-drawing:
+// * UIKit iOS 26 UIGlassEffect(style: .regular) in a UIVisualEffectView.
+// * UIGlassEffect.isInteractive = false (the glass itself does not
+//   react/expand on tap; the web content's own interaction toggle
+//   is separate, in PreviewWebView).
+// * Tint: light capsule .white, dark capsule .black — a UIGlassEffect
+//   property, not a drawn fill.
+// * No self-drawn gradient, border, shadow or highlight anywhere.
 // * The only layer property set here is cornerRadius, as geometry
 //   to clip the capsule (and the preview inside it) to a capsule
 //   shape. Clipping to a shape is not drawing a material.
 //
-// The PreviewWebView inside stays transparent (html/body background
-// forced transparent), so this solid capsule colour IS the visible
-// card background, and the uploaded page's text/icons sit on top of
-// it in their own colours. The class name is kept unchanged so
-// MainViewController needs no changes for this file.
+// How it is layered:
+// * The glass effect view fills the whole capsule (its size is the
+//   card height set by the 卡片高度 control).
+// * The preview (web content) sits in the effect view's contentView,
+//   on top of the glass — so the glass is behind the content, the
+//   content is not blurred by the glass, and the glass shows around
+//   the content wherever the content does not paint.
+//
+// Content size does NOT follow card size (unchanged Build 8 rule):
+// * The preview's own height is always its measured content height
+//   (see PreviewWebView) and is never set to the capsule height,
+//   so content never auto-fits, auto-resizes or stretches to match
+//   the capsule, and content and capsule stay visibly different
+//   sizes — the glass capsule remains visible around the content
+//   and nothing is missing because the content was forced to fill it.
+// * The preview is TOP-aligned inside the glass contentView: a
+//   taller capsule leaves glass visible below the original-size
+//   content, and a shorter capsule clips the BOTTOM of the content,
+//   never the avatar / phone number at the top (the old
+//   bottom-alignment clipped the top instead).
+// * Horizontal/vertical offset still moves the whole content
+//   (position follows) and the manual 内容缩放 control still scales
+//   it, but only when the user explicitly uses it; height changes
+//   alone never scale or resize content.
+//
+// Background colour removal, clarified by the correction:
+// * "去掉背景颜色" means removing the old solid pure white / pure
+//   black capsule backgrounds (Build 3/5) and replacing them with
+//   native glass — not replacing them with nothing. There is no
+//   solid white/black background in this file at any value.
+//
+// The class name is kept unchanged so MainViewController needs no
+// changes for this file's API (preview, setCapsuleHeight,
+// setBackgroundAlpha).
 final class GlassCapsuleView: UIView {
 
     enum Kind {
@@ -33,13 +64,27 @@ final class GlassCapsuleView: UIView {
     let preview: PreviewWebView
 
     private let kind: Kind
+    private let glassView: UIVisualEffectView
     private var capsuleHeightConstraint: NSLayoutConstraint?
 
+    private var baseTint: UIColor {
+        switch kind {
+        case .light: return .white
+        case .dark: return .black
+        }
+    }
+
+    private func makeGlassEffect(tintAlpha: CGFloat) -> UIGlassEffect {
+        let effect = UIGlassEffect(style: .regular)
+        effect.isInteractive = false
+        effect.tintColor = baseTint.withAlphaComponent(tintAlpha)
+        return effect
+    }
+
     /// Capsule height, independent of the web content height.
-    /// When this is smaller than the preview, the preview is
-    /// bottom-aligned inside the capsule and the top is clipped
-    /// (capsule clipsToBounds). When it is larger, the preview sits
-    /// at the bottom and solid capsule colour fills above it.
+    /// Changing this height never resizes, scales or stretches the
+    /// content (see the header comment): it only changes how much
+    /// native glass shows around the original-size content.
     func setCapsuleHeight(_ height: CGFloat) {
         let h = max(height, 0)
         if let c = capsuleHeightConstraint {
@@ -51,16 +96,22 @@ final class GlassCapsuleView: UIView {
         }
     }
 
-    /// Background transparency control (Build 4).
-    /// alpha 0 = capsule colour fully transparent, the light-grey page
-    /// shows through where the page drew nothing; alpha 1 = fully solid.
+    /// Background transparency control (title line, step 5).
+    /// This no longer paints any solid colour. It adjusts the native
+    /// glass itself, without touching the content above it:
+    /// * 0 = glass effect removed (glass fully transparent, content
+    ///   alone remains — the effect view's contentView is untouched,
+    ///   so the content does NOT fade out with the glass).
+    /// * >0 = native glass present, with the tint alpha proportional
+    ///   to the value; 100 = full native glass with full tint.
+    /// Setting the effect view's own alpha would also fade the
+    /// content inside it, so it is deliberately not used here.
     func setBackgroundAlpha(_ alpha: CGFloat) {
         let a = min(max(alpha, 0), 1)
-        switch kind {
-        case .light:
-            backgroundColor = UIColor.white.withAlphaComponent(a)
-        case .dark:
-            backgroundColor = UIColor.black.withAlphaComponent(a)
+        if a <= 0 {
+            glassView.effect = nil
+        } else {
+            glassView.effect = makeGlassEffect(tintAlpha: a)
         }
     }
 
@@ -72,6 +123,12 @@ final class GlassCapsuleView: UIView {
         case .dark:
             self.preview = PreviewWebView(scheme: .dark)
         }
+        // Native glass, created once with full tint; setBackgroundAlpha
+        // (called by applyAdjustments) keeps it in sync with the control.
+        let initialEffect = UIGlassEffect(style: .regular)
+        initialEffect.isInteractive = false
+        initialEffect.tintColor = kind == .light ? .white : .black
+        self.glassView = UIVisualEffectView(effect: initialEffect)
         super.init(frame: .zero)
 
         // The capsule's own trait collection drives the webview's
@@ -83,29 +140,34 @@ final class GlassCapsuleView: UIView {
             overrideUserInterfaceStyle = .dark
         }
 
-        // Solid colour only, flat.
-        switch kind {
-        case .light:
-            backgroundColor = .white
-        case .dark:
-            backgroundColor = .black
-        }
+        // No solid background on the capsule itself: the glass is
+        // the card's surface.
+        backgroundColor = .clear
+        glassView.backgroundColor = .clear
+        glassView.clipsToBounds = true
         clipsToBounds = true
 
-        addSubview(preview)
+        addSubview(glassView)
+        glassView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            glassView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            glassView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            glassView.topAnchor.constraint(equalTo: topAnchor),
+            glassView.bottomAnchor.constraint(equalTo: bottomAnchor),
+        ])
+
+        // Content lives in the glass effect view's contentView, on top
+        // of the glass, top-aligned, at its own measured height.
+        // Pinning its bottom as well would force it to stretch to the
+        // capsule height and break content-size independence.
+        glassView.contentView.addSubview(preview)
         preview.translatesAutoresizingMaskIntoConstraints = false
         preview.layer.cornerRadius = 0
         preview.clipsToBounds = true
-        // Bottom-aligned only (Build 4): the preview's own height is
-        // the web content height (see PreviewWebView). Pinning top as
-        // well would force the preview to stretch to the capsule height
-        // and break the card-height control. With bottom-only pinning,
-        // a taller capsule leaves solid colour above the content and
-        // a shorter capsule clips the top of the content.
         NSLayoutConstraint.activate([
-            preview.leadingAnchor.constraint(equalTo: leadingAnchor),
-            preview.trailingAnchor.constraint(equalTo: trailingAnchor),
-            preview.bottomAnchor.constraint(equalTo: bottomAnchor),
+            preview.leadingAnchor.constraint(equalTo: glassView.contentView.leadingAnchor),
+            preview.trailingAnchor.constraint(equalTo: glassView.contentView.trailingAnchor),
+            preview.topAnchor.constraint(equalTo: glassView.contentView.topAnchor),
         ])
         // Definite initial height so the capsule is not ambiguous
         // before the first measured height arrives.
@@ -124,6 +186,7 @@ final class GlassCapsuleView: UIView {
         // This sets a clip radius only; it paints nothing extra.
         let radius = min(bounds.height / 2, 36)
         layer.cornerRadius = radius
+        glassView.layer.cornerRadius = radius
         preview.layer.cornerRadius = radius
     }
 }
