@@ -384,10 +384,10 @@ final class MainViewController: UIViewController {
         xValueLabel = UILabel(); xValueLabel.text = "0"
         xSlider = makeSlider(min: -200, max: 200, value: 0)
         xSlider.addTarget(self, action: #selector(xSliderChanged), for: .valueChanged)
-        let xMinus = roundButton(title: "−"); xMinus.addTarget(self, action: #selector(xMinus), for: .touchUpInside)
-        let xPlus = roundButton(title: "+"); xPlus.addTarget(self, action: #selector(xPlus), for: .touchUpInside)
+        let xMinusBtn = roundButton(title: "−"); xMinusBtn.addTarget(self, action: #selector(xMinus), for: .touchUpInside)
+        let xPlusBtn = roundButton(title: "+"); xPlusBtn.addTarget(self, action: #selector(xPlus), for: .touchUpInside)
         let xCol = controlRow(icon: "arrow.left.arrow.right", title: "横向偏移", valueLabel: xValueLabel, description: "把网页内容左右挪一挪，填负数往左；胶囊本身不动")
-        let xBlock = UIStackView(arrangedSubviews: [xCol, sliderRow(slider: xSlider, minus: xMinus, plus: xPlus)])
+        let xBlock = UIStackView(arrangedSubviews: [xCol, sliderRow(slider: xSlider, minus: xMinusBtn, plus: xPlusBtn)])
         xBlock.axis = .vertical; xBlock.spacing = 10
         controlsStack.addArrangedSubview(xBlock)
 
@@ -395,10 +395,10 @@ final class MainViewController: UIViewController {
         yValueLabel = UILabel(); yValueLabel.text = "0"
         ySlider = makeSlider(min: -200, max: 200, value: 0)
         ySlider.addTarget(self, action: #selector(ySliderChanged), for: .valueChanged)
-        let yMinus = roundButton(title: "−"); yMinus.addTarget(self, action: #selector(yMinus), for: .touchUpInside)
-        let yPlus = roundButton(title: "+"); yPlus.addTarget(self, action: #selector(yPlus), for: .touchUpInside)
+        let yMinusBtn = roundButton(title: "−"); yMinusBtn.addTarget(self, action: #selector(yMinus), for: .touchUpInside)
+        let yPlusBtn = roundButton(title: "+"); yPlusBtn.addTarget(self, action: #selector(yPlus), for: .touchUpInside)
         let yCol = controlRow(icon: "arrow.up.arrow.down", title: "纵向偏移", valueLabel: yValueLabel, description: "把网页内容上下挪一挪，填负数往上；胶囊本身不动")
-        let yBlock = UIStackView(arrangedSubviews: [yCol, sliderRow(slider: ySlider, minus: yMinus, plus: yPlus)])
+        let yBlock = UIStackView(arrangedSubviews: [yCol, sliderRow(slider: ySlider, minus: yMinusBtn, plus: yPlusBtn)])
         yBlock.axis = .vertical; yBlock.spacing = 10
         controlsStack.addArrangedSubview(yBlock)
 
@@ -415,10 +415,10 @@ final class MainViewController: UIViewController {
 
         // 5. 背景透明度 (stepper only, no slider, as in screenshot)
         bgValueLabel = UILabel(); bgValueLabel.text = "0"
-        let bgMinus = roundButton(title: "−"); bgMinus.addTarget(self, action: #selector(bgMinus), for: .touchUpInside)
-        let bgPlus = roundButton(title: "+"); bgPlus.addTarget(self, action: #selector(bgPlus), for: .touchUpInside)
+        let bgMinusBtn = roundButton(title: "−"); bgMinusBtn.addTarget(self, action: #selector(bgMinus), for: .touchUpInside)
+        let bgPlusBtn = roundButton(title: "+"); bgPlusBtn.addTarget(self, action: #selector(bgPlus), for: .touchUpInside)
         let bgCol = controlRow(icon: "paintpalette", title: "背景透明度", valueLabel: bgValueLabel, description: "网页没画东西的地方透出的底色，0 是完全透明，100 是实色")
-        let bgRow = UIStackView(arrangedSubviews: [bgMinus, bgPlus])
+        let bgRow = UIStackView(arrangedSubviews: [bgMinusBtn, bgPlusBtn])
         bgRow.axis = .horizontal; bgRow.spacing = 12; bgRow.alignment = .center
         let bgSpacer = UIView()
         let bgControls = UIStackView(arrangedSubviews: [bgSpacer, bgRow])
