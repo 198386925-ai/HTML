@@ -14,11 +14,16 @@ import UIKit
 // * The only layer property set here is cornerRadius, and only as
 //   geometry: it clips the system effect view to a capsule shape.
 //   Clipping a system effect to a shape is not drawing the effect.
-// * The webview sits inside the effect view's contentView, inset by
-//   3pt on every side. That 3pt rim is the visible system glass;
-//   the webview itself is not blurred, tinted, or made transparent
-//   by this container. The uploaded page keeps its own background
-//   and opacity exactly as written.
+// * Background-removal version: the webview is now transparent
+//   (see PreviewWebView: isOpaque = false, html/body background
+//   forced transparent), so the 14pt rim no longer makes sense.
+//   The glass now fills the WHOLE capsule and IS the card's
+//   background: the transparent webview sits flush (0pt inset)
+//   over the effect view's contentView, and the uploaded page's
+//   text/icons float on top of the system glass. The previous
+//   3pt (Build 1) and 14pt (early Build 2) rims hid the glass
+//   behind an opaque webview; a flush transparent webview is
+//   what actually shows it.
 //
 // Light vs dark: both capsules use UIGlassEffect(style: .regular).
 // The tintColor below is a UIGlassEffect property, not a custom
@@ -82,19 +87,21 @@ final class GlassCapsuleView: UIView {
             effectView.bottomAnchor.constraint(equalTo: bottomAnchor),
         ])
 
-        // The webview lives in the effect view's contentView, so the
-        // system glass renders behind it and only the 3pt rim shows.
-        // The webview's own corners are clipped to the same capsule
-        // shape, again geometry only, no material drawing.
+        // The transparent webview lives in the effect view's
+        // contentView, flush (0pt inset) so the system glass fills
+        // the whole capsule and shows through the transparent
+        // html/body as the card background. The webview's own
+        // corners are clipped to the same capsule shape, again
+        // geometry only, no material drawing.
         effectView.contentView.addSubview(preview)
         preview.translatesAutoresizingMaskIntoConstraints = false
         preview.layer.cornerRadius = 0
         preview.clipsToBounds = true
         NSLayoutConstraint.activate([
-            preview.topAnchor.constraint(equalTo: effectView.contentView.topAnchor, constant: 3),
-            preview.leadingAnchor.constraint(equalTo: effectView.contentView.leadingAnchor, constant: 3),
-            preview.trailingAnchor.constraint(equalTo: effectView.contentView.trailingAnchor, constant: 3),
-            preview.bottomAnchor.constraint(equalTo: effectView.contentView.bottomAnchor, constant: -3),
+            preview.topAnchor.constraint(equalTo: effectView.contentView.topAnchor),
+            preview.leadingAnchor.constraint(equalTo: effectView.contentView.leadingAnchor),
+            preview.trailingAnchor.constraint(equalTo: effectView.contentView.trailingAnchor),
+            preview.bottomAnchor.constraint(equalTo: effectView.contentView.bottomAnchor),
         ])
     }
 
@@ -110,6 +117,6 @@ final class GlassCapsuleView: UIView {
         // This sets a clip radius only; it paints nothing.
         let radius = min(bounds.height / 2, 36)
         effectView.layer.cornerRadius = radius
-        preview.layer.cornerRadius = max(radius - 3, 0)
+        preview.layer.cornerRadius = radius
     }
 }
