@@ -31,19 +31,24 @@ final class MainViewController: UIViewController {
 
     // MARK: Build 4 adjustment state (global: both previews together)
     private var measuredContentHeight: CGFloat = 0
+    // Build 12 (user: "不支持修改这个高度，那工具栏只是调卡片的"):
+    // fixedCardHeight is now the INNER HTML card content height
+    // ONLY — never the glass capsule height. The glass capsule
+    // height is fixed at GlassCapsuleView.fixedCapsuleHeight (96pt)
+    // from launch, on import, on clear and on every toolbar
+    // adjustment, and no control ever changes it. The 卡片高度
+    // control changes only this inner height: the inner card inside
+    // the fixed glass capsule grows/shrinks, overflow is clipped by
+    // the capsule, and the capsule itself never moves, grows or
+    // shrinks.
     private var fixedCardHeight: CGFloat? = nil
-    // Build 8 capsule lock (user: "修改卡片内容时卡片会放大，不许
-    // 卡片乱动"): the FIRST measured height for a file sets the
-    // capsule height once, then locks it. After that, content
-    // changes — new measurement after a font change, a reload after
-    // a location grant, a taller/shorter re-measure — never move the
-    // capsule again. The ONLY entry that changes capsule height
-    // afterwards is the user manually using the 卡片高度 control
-    // (setHeight), which sets fixedCardHeight directly. The preview
-    // inside may still grow/shrink and be clipped by the capsule,
-    // but the capsule's own height constraint, and therefore the
-    // whole page layout (both capsules, toolbar position), never
-    // jumps because content changed.
+    // Build 8 lock, redefined in Build 12: the FIRST measured height
+    // for a file sets the INNER card height once, then locks it.
+    // After that, content changes — new measurement after a font
+    // change, a reload after a location grant, a taller/shorter
+    // re-measure — never move the inner card or the capsule again.
+    // The ONLY entry that changes the inner height afterwards is
+    // the user manually using the 卡片高度 control (setHeight).
     private var capsuleHeightLocked: Bool = false
     private var horizontalOffset: CGFloat = 0
     private var verticalOffset: CGFloat = 0
@@ -374,9 +379,13 @@ final class MainViewController: UIViewController {
             stackView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor, constant: -32),
         ])
 
-        // Capsules start hidden; they appear only after a file is picked.
-        lightCapsule.isHidden = true
-        darkCapsule.isHidden = true
+        // Build 12 (user: "这个一直显示在这，没有导入html也要显示"):
+        // capsules are ALWAYS visible, on launch with no file, on
+        // import and on clear. They are never hidden again. With no
+        // file they are empty native glass at the fixed height;
+        // with a file the same capsules fill with content.
+        lightCapsule.isHidden = false
+        darkCapsule.isHidden = false
     }
 
     // MARK: Build 4 controls (below the previews, global to both)
@@ -599,15 +608,13 @@ final class MainViewController: UIViewController {
         // not through here, so they still work after the lock.
         if !capsuleHeightLocked {
             capsuleHeightLocked = true
-            // Build 10: lock capsule height to content height +
-            // 2 * glassMargin (16pt each side), NOT content height
-            // alone. Build 9 locked it to content height exactly,
-            // so the solid card background covered the glass with
-            // zero margin and no glass was visible on device.
-            // The slider/label now show the CAPSULE height (the
-            // value the 卡片高度 control edits), which is 32pt
-            // more than the measured content height by default.
-            fixedCardHeight = measuredContentHeight + 2 * GlassCapsuleView.glassMargin
+            // Build 12: lock the INNER card height to the measured
+            // content height. The glass capsule height is NOT set
+            // here at all — it stays fixed at 96pt (see
+            // GlassCapsuleView.fixedCapsuleHeight). The slider/label
+            // now show the INNER card height, which is what the
+            // 卡片高度 control edits.
+            fixedCardHeight = measuredContentHeight
             heightSlider.value = Float(fixedCardHeight!)
             heightValueLabel.text = "\(Int(fixedCardHeight!))"
             applyAdjustments()
@@ -615,23 +622,21 @@ final class MainViewController: UIViewController {
     }
 
     private func applyAdjustments() {
-        // Build 8: capsule height ONLY changes the capsule.
-        // It is never passed to the preview as a content height and
-        // never enters the transform, so content size does not follow
-        // card size: height changes alone neither scale nor resize
-        // the avatar / number / icons / text. Offset still moves the
-        // whole content (position follows) and the manual scale
-        // control still scales it, but only when the user uses it.
-        // Build 10: before any lock, the default capsule is also
-        // content + 2 * margin, never content exactly, so the glass
-        // frame is visible from the first render. Manual height
-        // changes set fixedCardHeight directly (the capsule height);
-        // content is never stretched to fill it, so the glass margin
-        // stays visible (top/left/right always 16pt; the bottom band
-        // is capsule height minus content height minus 16pt).
-        let capsuleHeight = fixedCardHeight ?? (measuredContentHeight + 2 * GlassCapsuleView.glassMargin)
+        // Build 12: the glass capsule height is NEVER set here —
+        // it is fixed at 96pt in GlassCapsuleView and never changes.
+        // This function only adjusts the INNER card: its displayed
+        // height (卡片高度 control), its background alpha, its
+        // offset/scale transform and its interactivity. The inner
+        // card is clipped by the fixed capsule when it is taller
+        // than the capsule, and glass shows around/below it when
+        // it is shorter. Height changes alone neither scale nor
+        // resize the avatar / number / icons / text beyond the
+        // inner height itself; offset still moves the whole content
+        // (position follows) and the manual scale control still
+        // scales it, but only when the user uses it.
+        let innerHeight: CGFloat? = fixedCardHeight ?? (measuredContentHeight > 0 ? measuredContentHeight : nil)
         for capsule in [lightCapsule, darkCapsule] {
-            capsule.setCapsuleHeight(capsuleHeight)
+            capsule.preview.setDisplayedContentHeight(innerHeight)
             capsule.setCardBackgroundAlpha(backgroundAlphaPercent / 100)
             capsule.preview.applyTransform(offsetX: horizontalOffset, offsetY: verticalOffset, scale: contentScalePercent / 100)
             capsule.preview.setInteractive(webInteractive)
@@ -649,8 +654,8 @@ final class MainViewController: UIViewController {
     // Build 5: every -/+ button steps by exactly 1 per tap.
     // Slider drag still moves continuously; buttons are strictly +/-1.
     @objc private func heightSliderChanged() { setHeight(CGFloat(heightSlider.value)) }
-    @objc private func heightMinus() { setHeight((fixedCardHeight ?? (measuredContentHeight + 2 * GlassCapsuleView.glassMargin)) - 1) }
-    @objc private func heightPlus() { setHeight((fixedCardHeight ?? (measuredContentHeight + 2 * GlassCapsuleView.glassMargin)) + 1) }
+    @objc private func heightMinus() { setHeight((fixedCardHeight ?? measuredContentHeight) - 1) }
+    @objc private func heightPlus() { setHeight((fixedCardHeight ?? measuredContentHeight) + 1) }
 
     @objc private func xSliderChanged() { horizontalOffset = CGFloat(xSlider.value); xValueLabel.text = "\(Int(horizontalOffset))"; applyAdjustments() }
     @objc private func xMinus() { xSlider.value -= 1; xSliderChanged() }
@@ -676,7 +681,12 @@ final class MainViewController: UIViewController {
         measuredContentHeight = 0
         fixedCardHeight = nil
         // A new file gets one fresh first measurement, then locks again.
+        // The glass capsule height is NOT reset here — it stays fixed.
         capsuleHeightLocked = false
+        // Clear any manual inner-height override so the new file's
+        // first measurement can set the inner height again.
+        lightCapsule.preview.setDisplayedContentHeight(nil)
+        darkCapsule.preview.setDisplayedContentHeight(nil)
         heightSlider.value = 0
         heightValueLabel.text = "0"
         // Build 11: a new file resets background transparency to
@@ -695,8 +705,10 @@ final class MainViewController: UIViewController {
         fileNameLabel.text = "未选择文件"
         fileSizeLabel.text = "上浅下深 · 高度跟随内容"
         emptyLabel.isHidden = false
-        lightCapsule.isHidden = true
-        darkCapsule.isHidden = true
+        // Build 12: capsules NEVER disappear. No file = empty native
+        // glass at the fixed height; the hint text stays above them.
+        lightCapsule.isHidden = false
+        darkCapsule.isHidden = false
         controlsContainer.isHidden = true
         footerLabel.isHidden = true
         clearButton.isEnabled = false
@@ -708,6 +720,8 @@ final class MainViewController: UIViewController {
         fileNameLabel.text = name
         fileSizeLabel.text = sizeText
         emptyLabel.isHidden = true
+        // Same capsules as the no-file state — content loads into
+        // them, no new capsules are created and none are hidden.
         lightCapsule.isHidden = false
         darkCapsule.isHidden = false
         controlsContainer.isHidden = false
