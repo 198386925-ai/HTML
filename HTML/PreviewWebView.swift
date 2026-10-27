@@ -58,6 +58,13 @@ final class PreviewWebView: UIView {
     }
 
     /// Called on the main thread whenever a new content height is measured.
+    /// Build 8: this height is the content's OWN measured size and is
+    /// never overwritten by the capsule/card height. The card-height
+    /// control changes only the capsule's height (GlassCapsuleView);
+    /// this heightConstraint stays at the measured extent, so content
+    /// never auto-fits, auto-resizes or stretches to match the capsule.
+    /// Only the manual 内容缩放 control (applyTransform scale) scales
+    /// content, and only when the user explicitly uses it.
     var onHeightMeasured: ((CGFloat) -> Void)?
 
     private let scheme: Scheme
@@ -173,7 +180,15 @@ final class PreviewWebView: UIView {
     func load(html: String, font: ImportedFont?) {
         originalHTML = html
         importedFont = font
-        webView.loadHTMLString(processedHTML(from: html, font: font), baseURL: nil)
+        // Build 8 location fix: baseURL https://localhost/ instead of
+        // nil. loadHTMLString with baseURL nil gives the page an
+        // opaque about:blank origin, in which WKWebView geolocation is
+        // blocked even when the app itself is authorized — the exact
+        // "permission granted but card still shows no location" chain.
+        // localhost is a secure context, so the page's geolocation
+        // call can use the app's authorization. Font is injected
+        // inline as a data URL, so no relative resource changes.
+        webView.loadHTMLString(processedHTML(from: html, font: font), baseURL: URL(string: "https://localhost/"))
         // Re-apply the whole-content transform so the reloaded card
         // (avatar, text, icons included) keeps following the card's
         // current height/offset/scale adjustments.
