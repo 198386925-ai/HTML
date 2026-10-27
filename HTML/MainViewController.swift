@@ -130,7 +130,6 @@ final class MainViewController: UIViewController {
         // Pill buttons, not plain blue text links, as on the web page.
         replaceButton.setTitle("更换文件", for: .normal)
         replaceButton.setImage(UIImage(systemName: "square.and.arrow.up"), for: .normal)
-        replaceButton.imagePadding = 6
         stylePillButton(replaceButton, background: UIColor(red: 0.05, green: 0.47, blue: 0.42, alpha: 1), titleColor: .white)
         replaceButton.addTarget(self, action: #selector(replaceTapped), for: .touchUpInside)
         clearButton.setTitle("清除", for: .normal)
