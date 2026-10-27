@@ -68,6 +68,28 @@ final class PreviewWebView: UIView {
     private var originalHTML: String?
     private var importedFont: ImportedFont?
 
+    /// Last content extent reported by the page script (untransformed).
+    var measuredHeight: CGFloat = 0
+
+    // MARK: Build 4 adjustments (applied to the WKWebView view itself,
+    // so height measurement inside the page is unaffected)
+
+    /// Offset (points) + scale for the web content. Scale is around the
+    /// view centre; the capsule clips overflow, so the capsule itself
+    /// never moves or resizes for offset/scale changes.
+    func applyTransform(offsetX: CGFloat, offsetY: CGFloat, scale: CGFloat) {
+        var t = CGAffineTransform(scaleX: scale, y: scale)
+        t.tx = offsetX
+        t.ty = offsetY
+        webView.transform = t
+    }
+
+    /// Interactive toggle: OFF disables interaction on the webview, so
+    /// taps fall through to the scroll view behind it.
+    func setInteractive(_ enabled: Bool) {
+        webView.isUserInteractionEnabled = enabled
+    }
+
     init(scheme: Scheme) {
         self.scheme = scheme
 
@@ -153,6 +175,7 @@ final class PreviewWebView: UIView {
         // typically well under 3000pt; a genuinely long page still grows
         // because the outer scroll view scrolls.
         let clamped = height <= 0 ? CGFloat(0) : min(height, 4000)
+        measuredHeight = clamped
         heightConstraint.constant = clamped
         onHeightMeasured?(clamped)
     }
