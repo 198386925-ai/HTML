@@ -33,8 +33,11 @@ final class MainViewController: UIViewController {
     private let scrollView = UIScrollView()
     private let stackView = UIStackView()
     private let titleLabel = UILabel()
+    private let fileIconView = UIView()
+    private let fileIconLabel = UILabel()
     private let fileNameLabel = UILabel()
     private let fileSizeLabel = UILabel()
+    private let footerLabel = UILabel()
 
     private let replaceButton = UIButton(type: .system)
     private let clearButton = UIButton(type: .system)
@@ -63,9 +66,31 @@ final class MainViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
+        // Background removal (user's first step): no solid page
+        // background at all — not white, not grey. The view and the
+        // scroll view are clear, so the glass capsules are the
+        // visible surfaces instead of a painted page background.
+        // Top-bar labels/buttons keep their own system colours;
+        // only the page background is removed.
+        view.backgroundColor = .clear
+        scrollView.backgroundColor = .clear
         buildLayout()
         updateForNoFile()
+    }
+
+    // MARK: Pill buttons (web layout, UIKit only)
+
+    private func stylePillButton(_ button: UIButton, background: UIColor, titleColor: UIColor, bordered: Bool = false) {
+        button.backgroundColor = background
+        button.setTitleColor(titleColor, for: .normal)
+        button.titleLabel?.font = .preferredFont(forTextStyle: .headline)
+        button.contentEdgeInsets = UIEdgeInsets(top: 9, left: 16, bottom: 9, right: 16)
+        button.layer.cornerRadius = 17
+        button.clipsToBounds = true
+        if bordered {
+            button.layer.borderWidth = 1
+            button.layer.borderColor = UIColor.systemGray4.cgColor
+        }
     }
 
     // MARK: Layout (all UIKit, all system colours, no drawn decoration)
@@ -76,6 +101,16 @@ final class MainViewController: UIViewController {
         titleLabel.textColor = .label
         titleLabel.numberOfLines = 1
 
+        // Web layout 1:1, UIKit only: black </> file icon, then
+        // filename (truncated in the middle) + size line.
+        fileIconView.backgroundColor = .black
+        fileIconView.layer.cornerRadius = 12
+        fileIconView.clipsToBounds = true
+        fileIconLabel.text = "</>"
+        fileIconLabel.font = .systemFont(ofSize: 18, weight: .bold)
+        fileIconLabel.textColor = .white
+        fileIconLabel.textAlignment = .center
+
         fileNameLabel.font = .preferredFont(forTextStyle: .headline)
         fileNameLabel.textColor = .label
         fileNameLabel.numberOfLines = 1
@@ -85,13 +120,27 @@ final class MainViewController: UIViewController {
         fileSizeLabel.textColor = .secondaryLabel
         fileSizeLabel.numberOfLines = 1
 
+        footerLabel.text = "上：浅色 · 下：深色 · 高度已贴合内容"
+        footerLabel.font = .preferredFont(forTextStyle: .subheadline)
+        footerLabel.textColor = .secondaryLabel
+        footerLabel.numberOfLines = 1
+        footerLabel.textAlignment = .center
+        footerLabel.isHidden = true
+
+        // Pill buttons, not plain blue text links, as on the web page.
         replaceButton.setTitle("更换文件", for: .normal)
+        replaceButton.setImage(UIImage(systemName: "square.and.arrow.up"), for: .normal)
+        replaceButton.imagePadding = 6
+        stylePillButton(replaceButton, background: UIColor(red: 0.05, green: 0.47, blue: 0.42, alpha: 1), titleColor: .white)
         replaceButton.addTarget(self, action: #selector(replaceTapped), for: .touchUpInside)
         clearButton.setTitle("清除", for: .normal)
+        stylePillButton(clearButton, background: .white, titleColor: .label, bordered: true)
         clearButton.addTarget(self, action: #selector(clearTapped), for: .touchUpInside)
-        importFontButton.setTitle("导入字体", for: .normal)
+        importFontButton.setTitle("Aa 导入字体", for: .normal)
+        stylePillButton(importFontButton, background: .systemGray5, titleColor: .label)
         importFontButton.addTarget(self, action: #selector(importFontTapped), for: .touchUpInside)
         shareButton.setTitle("分享", for: .normal)
+        stylePillButton(shareButton, background: .systemGray5, titleColor: .label)
         shareButton.addTarget(self, action: #selector(shareTapped), for: .touchUpInside)
 
         fontTagLabel.font = .preferredFont(forTextStyle: .subheadline)
@@ -114,11 +163,36 @@ final class MainViewController: UIViewController {
         emptyLabel.numberOfLines = 0
         emptyLabel.textAlignment = .center
 
-        // Top bar: title, file info, then the four actions.
-        let buttonRow = UIStackView(arrangedSubviews: [replaceButton, clearButton, importFontButton, shareButton])
+        // File header row: </> icon + (filename, size) column.
+        fileIconView.addSubview(fileIconLabel)
+        fileIconLabel.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            fileIconLabel.topAnchor.constraint(equalTo: fileIconView.topAnchor),
+            fileIconLabel.leadingAnchor.constraint(equalTo: fileIconView.leadingAnchor),
+            fileIconLabel.trailingAnchor.constraint(equalTo: fileIconView.trailingAnchor),
+            fileIconLabel.bottomAnchor.constraint(equalTo: fileIconView.bottomAnchor),
+            fileIconView.widthAnchor.constraint(equalToConstant: 48),
+            fileIconView.heightAnchor.constraint(equalToConstant: 48),
+        ])
+        let fileInfoColumn = UIStackView(arrangedSubviews: [fileNameLabel, fileSizeLabel])
+        fileInfoColumn.axis = .vertical
+        fileInfoColumn.spacing = 2
+        fileInfoColumn.alignment = .leading
+        let fileHeaderRow = UIStackView(arrangedSubviews: [fileIconView, fileInfoColumn])
+        fileHeaderRow.axis = .horizontal
+        fileHeaderRow.spacing = 12
+        fileHeaderRow.alignment = .center
+
+        // Top bar, web order: font/share/clear pills on one row,
+        // then the prominent teal Replace pill on its own row.
+        let buttonRow = UIStackView(arrangedSubviews: [importFontButton, shareButton, clearButton])
         buttonRow.axis = .horizontal
-        buttonRow.spacing = 16
+        buttonRow.spacing = 10
         buttonRow.alignment = .leading
+        let replaceRow = UIStackView(arrangedSubviews: [replaceButton])
+        replaceRow.axis = .horizontal
+        replaceRow.spacing = 10
+        replaceRow.alignment = .leading
 
         let fontTagRow = UIStackView(arrangedSubviews: [fontTagLabel, fontRemoveButton])
         fontTagRow.axis = .horizontal
@@ -137,12 +211,12 @@ final class MainViewController: UIViewController {
         // They are separate views in a stack with spacing, never
         // overlapping and never masked into each other.
         stackView.axis = .vertical
-        stackView.spacing = 18
+        stackView.spacing = 14
         stackView.alignment = .fill
         stackView.addArrangedSubview(titleLabel)
-        stackView.addArrangedSubview(fileNameLabel)
-        stackView.addArrangedSubview(fileSizeLabel)
+        stackView.addArrangedSubview(fileHeaderRow)
         stackView.addArrangedSubview(buttonRow)
+        stackView.addArrangedSubview(replaceRow)
         // The tag pill must not stretch to full stack width: it lives in
         // a plain container and sizes to its own label + remove button.
         fontTagContainer.addSubview(fontTagView)
@@ -157,6 +231,7 @@ final class MainViewController: UIViewController {
         stackView.addArrangedSubview(emptyLabel)
         stackView.addArrangedSubview(lightCapsule)
         stackView.addArrangedSubview(darkCapsule)
+        stackView.addArrangedSubview(footerLabel)
 
         view.addSubview(scrollView)
         scrollView.addSubview(stackView)
@@ -189,6 +264,7 @@ final class MainViewController: UIViewController {
         emptyLabel.isHidden = false
         lightCapsule.isHidden = true
         darkCapsule.isHidden = true
+        footerLabel.isHidden = true
         clearButton.isEnabled = false
         shareButton.isEnabled = false
     }
@@ -200,6 +276,7 @@ final class MainViewController: UIViewController {
         emptyLabel.isHidden = true
         lightCapsule.isHidden = false
         darkCapsule.isHidden = false
+        footerLabel.isHidden = false
         clearButton.isEnabled = true
         shareButton.isEnabled = true
     }
@@ -209,12 +286,12 @@ final class MainViewController: UIViewController {
             fontTagLabel.text = "Aa  \(font.fileName)"
             fontTagView.isHidden = false
             fontTagContainer.isHidden = false
-            importFontButton.setTitle("更换字体", for: .normal)
+            importFontButton.setTitle("Aa 更换字体", for: .normal)
         } else {
             fontTagLabel.text = nil
             fontTagView.isHidden = true
             fontTagContainer.isHidden = true
-            importFontButton.setTitle("导入字体", for: .normal)
+            importFontButton.setTitle("Aa 导入字体", for: .normal)
         }
     }
 
