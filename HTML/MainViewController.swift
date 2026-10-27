@@ -1,5 +1,6 @@
 import UIKit
 import UniformTypeIdentifiers
+import CoreLocation
 
 // MARK: - MainViewController
 //
@@ -89,6 +90,24 @@ final class MainViewController: UIViewController {
     }
     private var currentPickPurpose: PickPurpose = .html
 
+    // MARK: Build 7 location (user: "再给APP获取定位权限")
+    //
+    // When-In-Use only. Requested at launch and again when a file is
+    // first loaded, but only while the status is .notDetermined, so
+    // the system prompt appears at most once and a denial never loops
+    // into repeated prompts or alerts: on denial the card simply keeps
+    // showing whatever the HTML itself shows ("定位权限未开启" for a
+    // card whose own script reports no location). On grant, previews
+    // re-render once so a page script that calls geolocation on load
+    // gets a chance to succeed with the new authorization.
+    private let locationManager = CLLocationManager()
+
+    private func requestLocationIfNeeded() {
+        guard locationManager.authorizationStatus == .notDetermined else { return }
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
+    }
+
     // MARK: Lifecycle
 
     override func viewDidLoad() {
@@ -105,6 +124,7 @@ final class MainViewController: UIViewController {
         scrollView.backgroundColor = UIColor(red: 0.91, green: 0.91, blue: 0.92, alpha: 1.0)
         buildLayout()
         updateForNoFile()
+        requestLocationIfNeeded()
     }
 
     // MARK: Pill buttons (web layout, UIKit only)
@@ -601,8 +621,14 @@ final class MainViewController: UIViewController {
 
     private func renderPreviews() {
         guard let html = htmlText else { return }
+        requestLocationIfNeeded()
         lightCapsule.preview.load(html: html, font: importedFont)
         darkCapsule.preview.load(html: html, font: importedFont)
+        // Whole-content follow (Build 7): re-apply the current card
+        // adjustments after every reload, so avatar, text and icons
+        // keep moving/scaling/clipping with the card, not just the
+        // capsule background.
+        applyAdjustments()
     }
 
     // MARK: Actions
@@ -661,6 +687,25 @@ final class MainViewController: UIViewController {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "好", style: .default))
         present(alert, animated: true)
+    }
+}
+
+// MARK: - CLLocationManagerDelegate (Build 7)
+
+extension MainViewController: CLLocationManagerDelegate {
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            // Grant: give a loaded page script one fresh load, so its
+            // geolocation lookup can succeed now. No-op if no file.
+            if htmlText != nil { renderPreviews() }
+        case .denied, .restricted:
+            // Denial is final and silent: no alert, no re-prompt loop.
+            // The card keeps showing whatever its own HTML shows.
+            break
+        default:
+            break
+        }
     }
 }
 
