@@ -72,6 +72,30 @@ final class PreviewWebView: UIView {
     private let heightHandler: WeakHeightHandler
     private var heightConstraint: NSLayoutConstraint!
 
+    // Build 9: dedicated CARD background layer, separate from both
+    // the glass capsule (which sits behind this whole view) and the
+    // web content (which sits on top of this view). Background
+    // transparency adjusts ONLY this layer's alpha: at 100 it is a
+    // solid scheme colour behind text/icons, at 0 it is fully clear
+    // so the native glass behind shows through where the page drew
+    // nothing. Text, avatar, icons and the glass are never faded,
+    // because neither this view's alpha nor the webview's alpha nor
+    // the glass effect's alpha is ever touched.
+    private let cardBackgroundView = UIView()
+
+    private var cardBackgroundColor: UIColor {
+        switch scheme {
+        case .light: return .white
+        case .dark: return .black
+        }
+    }
+
+    /// Background transparency (0...1). Only the card background
+    /// layer's alpha changes; content and glass are untouched.
+    func setCardBackgroundAlpha(_ alpha: CGFloat) {
+        cardBackgroundView.backgroundColor = cardBackgroundColor.withAlphaComponent(min(max(alpha, 0), 1))
+    }
+
     private var originalHTML: String?
     private var importedFont: ImportedFont?
 
@@ -144,6 +168,11 @@ final class PreviewWebView: UIView {
         webView.backgroundColor = .clear
         webView.scrollView.backgroundColor = .clear
         backgroundColor = .clear
+        // Card background layer behind the webview, pinned to this
+        // view's edges so it is exactly content-sized (same size as
+        // the webview, not capsule-sized): glass remains visible
+        // around it wherever the capsule is taller than the content.
+        cardBackgroundView.backgroundColor = cardBackgroundColor
         webView.navigationDelegate = self
 
         // Forcing the trait collection is the second half of the
@@ -155,6 +184,14 @@ final class PreviewWebView: UIView {
         // well, because WKWebView reads its view hierarchy's traits.
         overrideUserInterfaceStyle = scheme.interfaceStyle
 
+        addSubview(cardBackgroundView)
+        cardBackgroundView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            cardBackgroundView.topAnchor.constraint(equalTo: topAnchor),
+            cardBackgroundView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            cardBackgroundView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            cardBackgroundView.bottomAnchor.constraint(equalTo: bottomAnchor),
+        ])
         addSubview(webView)
         webView.translatesAutoresizingMaskIntoConstraints = false
         heightConstraint = webView.heightAnchor.constraint(equalToConstant: 120)
