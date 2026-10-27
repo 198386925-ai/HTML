@@ -102,6 +102,30 @@ final class PreviewWebView: UIView {
     /// Last content extent reported by the page script (untransformed).
     var measuredHeight: CGFloat = 0
 
+    /// Build 12: manual inner-card height set by the 卡片高度 control.
+    /// When set, it is the DISPLAYED height of this inner card inside
+    /// the fixed glass capsule, independent of capsule height. It
+    /// survives re-measurements (font change, reload, location-grant
+    /// re-render) so the capsule and the inner card never jump when
+    /// content changes; it is cleared only by clear() and by a new
+    /// file (MainViewController.resetAdjustmentsForNewFile), so the
+    /// next file gets one fresh first measurement. Nil = follow the
+    /// measured height (no manual inner height yet).
+    private var displayHeightOverride: CGFloat?
+
+    /// Set the inner card's displayed height (卡片高度 control only).
+    /// Nil clears the override and follows the measured height again.
+    func setDisplayedContentHeight(_ height: CGFloat?) {
+        displayHeightOverride = height.map { max($0, 0) }
+        if let h = displayHeightOverride {
+            heightConstraint.constant = h
+        }
+        // Nil only clears the override; the next measurement report
+        // sets the height. It must NOT restore the old measured
+        // height here, or a cleared / new-file preview would briefly
+        // resurrect the previous card's height.
+    }
+
     // MARK: Build 4 adjustments (applied to the WKWebView view itself,
     // so height measurement inside the page is unaffected)
 
@@ -194,7 +218,10 @@ final class PreviewWebView: UIView {
         ])
         addSubview(webView)
         webView.translatesAutoresizingMaskIntoConstraints = false
-        heightConstraint = webView.heightAnchor.constraint(equalToConstant: 120)
+        // Build 12: start at 0 (empty glass, no file yet) instead of
+        // 120 — the fixed glass capsule is visible on launch, and
+        // the inner card only gains height when a file is measured.
+        heightConstraint = webView.heightAnchor.constraint(equalToConstant: 0)
         NSLayoutConstraint.activate([
             webView.topAnchor.constraint(equalTo: topAnchor),
             webView.leadingAnchor.constraint(equalTo: leadingAnchor),
@@ -236,6 +263,7 @@ final class PreviewWebView: UIView {
     func clear() {
         originalHTML = nil
         importedFont = nil
+        displayHeightOverride = nil
         webView.loadHTMLString("", baseURL: nil)
         reportMeasuredHeight(0)
     }
@@ -247,7 +275,14 @@ final class PreviewWebView: UIView {
         // because the outer scroll view scrolls.
         let clamped = height <= 0 ? CGFloat(0) : min(height, 4000)
         measuredHeight = clamped
-        heightConstraint.constant = clamped
+        // Build 12: a manual inner-card height (卡片高度 control)
+        // survives re-measurement — only the reference measured
+        // height updates, the displayed inner height does not jump.
+        if let override = displayHeightOverride {
+            heightConstraint.constant = override
+        } else {
+            heightConstraint.constant = clamped
+        }
         onHeightMeasured?(clamped)
     }
 
