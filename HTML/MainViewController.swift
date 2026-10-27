@@ -28,6 +28,29 @@ final class MainViewController: UIViewController {
     private var htmlFileURLForShare: URL?
     private var importedFont: ImportedFont?
 
+    // MARK: Build 4 adjustment state (global: both previews together)
+    private var measuredContentHeight: CGFloat = 0
+    private var fixedCardHeight: CGFloat? = nil
+    private var horizontalOffset: CGFloat = 0
+    private var verticalOffset: CGFloat = 0
+    private var contentScalePercent: CGFloat = 100
+    private var backgroundAlphaPercent: CGFloat = 0
+    private var webInteractive: Bool = true
+
+    // Controls section views (built in buildControls()).
+    private let controlsContainer = UIView()
+    private let controlsStack = UIStackView()
+    private var heightSlider: UISlider!
+    private var heightValueLabel: UILabel!
+    private var xSlider: UISlider!
+    private var xValueLabel: UILabel!
+    private var ySlider: UISlider!
+    private var yValueLabel: UILabel!
+    private var scaleSlider: UISlider!
+    private var scaleValueLabel: UILabel!
+    private var bgValueLabel: UILabel!
+    private var interactiveSwitch: UISwitch!
+
     // MARK: Views
 
     private let scrollView = UIScrollView()
@@ -232,6 +255,8 @@ final class MainViewController: UIViewController {
         stackView.addArrangedSubview(emptyLabel)
         stackView.addArrangedSubview(lightCapsule)
         stackView.addArrangedSubview(darkCapsule)
+        buildControls()
+        stackView.addArrangedSubview(controlsContainer)
         stackView.addArrangedSubview(footerLabel)
 
         view.addSubview(scrollView)
@@ -256,6 +281,227 @@ final class MainViewController: UIViewController {
         darkCapsule.isHidden = true
     }
 
+    // MARK: Build 4 controls (below the previews, global to both)
+
+    private func roundButton(title: String) -> UIButton {
+        let b = UIButton(type: .system)
+        b.setTitle(title, for: .normal)
+        b.titleLabel?.font = .systemFont(ofSize: 22, weight: .medium)
+        b.backgroundColor = .systemGray5
+        b.setTitleColor(.black, for: .normal)
+        b.layer.cornerRadius = 22
+        b.clipsToBounds = true
+        b.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            b.widthAnchor.constraint(equalToConstant: 44),
+            b.heightAnchor.constraint(equalToConstant: 44),
+        ])
+        return b
+    }
+
+    private func makeSlider(min: Float, max: Float, value: Float) -> UISlider {
+        let s = UISlider()
+        s.minimumValue = min
+        s.maximumValue = max
+        s.value = value
+        s.minimumTrackTintColor = .black
+        s.maximumTrackTintColor = .systemGray4
+        return s
+    }
+
+    private func controlRow(icon: String, title: String, valueLabel: UILabel, description: String) -> UIStackView {
+        let iconView = UIImageView(image: UIImage(systemName: icon))
+        iconView.tintColor = .black
+        iconView.contentMode = .scaleAspectFit
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            iconView.widthAnchor.constraint(equalToConstant: 28),
+            iconView.heightAnchor.constraint(equalToConstant: 28),
+        ])
+        let titleLabel = UILabel()
+        titleLabel.text = title
+        titleLabel.font = .preferredFont(forTextStyle: .headline)
+        titleLabel.textColor = .black
+        valueLabel.font = .preferredFont(forTextStyle: .headline)
+        valueLabel.textColor = .black
+        valueLabel.textAlignment = .right
+        let header = UIStackView(arrangedSubviews: [iconView, titleLabel, valueLabel])
+        header.axis = .horizontal
+        header.spacing = 10
+        header.alignment = .center
+        let desc = UILabel()
+        desc.text = description
+        desc.font = .preferredFont(forTextStyle: .subheadline)
+        desc.textColor = .darkGray
+        desc.numberOfLines = 0
+        let col = UIStackView(arrangedSubviews: [header, desc])
+        col.axis = .vertical
+        col.spacing = 4
+        col.alignment = .fill
+        return col
+    }
+
+    private func sliderRow(slider: UISlider, minus: UIButton, plus: UIButton) -> UIStackView {
+        let row = UIStackView(arrangedSubviews: [minus, slider, plus])
+        row.axis = .horizontal
+        row.spacing = 12
+        row.alignment = .center
+        return row
+    }
+
+    private func buildControls() {
+        controlsContainer.backgroundColor = .white
+        controlsContainer.layer.cornerRadius = 20
+        controlsContainer.clipsToBounds = true
+        controlsContainer.isHidden = true
+        controlsStack.axis = .vertical
+        controlsStack.spacing = 20
+        controlsStack.alignment = .fill
+        controlsContainer.addSubview(controlsStack)
+        controlsStack.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            controlsStack.topAnchor.constraint(equalTo: controlsContainer.topAnchor, constant: 16),
+            controlsStack.leadingAnchor.constraint(equalTo: controlsContainer.leadingAnchor, constant: 16),
+            controlsStack.trailingAnchor.constraint(equalTo: controlsContainer.trailingAnchor, constant: -16),
+            controlsStack.bottomAnchor.constraint(equalTo: controlsContainer.bottomAnchor, constant: -16),
+        ])
+
+        // 1. 卡片高度
+        heightValueLabel = UILabel()
+        heightValueLabel.text = "0"
+        heightSlider = makeSlider(min: 0, max: 1000, value: 0)
+        heightSlider.addTarget(self, action: #selector(heightSliderChanged), for: .valueChanged)
+        let hMinus = roundButton(title: "−")
+        hMinus.addTarget(self, action: #selector(heightMinus), for: .touchUpInside)
+        let hPlus = roundButton(title: "+")
+        hPlus.addTarget(self, action: #selector(heightPlus), for: .touchUpInside)
+        let hCol = controlRow(icon: "arrow.up.arrow.down", title: "卡片高度", valueLabel: heightValueLabel, description: "网页内容有多高，胶囊就是多高；调高了从底边往上长，超出部分看不到")
+        let hBlock = UIStackView(arrangedSubviews: [hCol, sliderRow(slider: heightSlider, minus: hMinus, plus: hPlus)])
+        hBlock.axis = .vertical; hBlock.spacing = 10
+        controlsStack.addArrangedSubview(hBlock)
+
+        // 2. 横向偏移
+        xValueLabel = UILabel(); xValueLabel.text = "0"
+        xSlider = makeSlider(min: -200, max: 200, value: 0)
+        xSlider.addTarget(self, action: #selector(xSliderChanged), for: .valueChanged)
+        let xMinus = roundButton(title: "−"); xMinus.addTarget(self, action: #selector(xMinus), for: .touchUpInside)
+        let xPlus = roundButton(title: "+"); xPlus.addTarget(self, action: #selector(xPlus), for: .touchUpInside)
+        let xCol = controlRow(icon: "arrow.left.arrow.right", title: "横向偏移", valueLabel: xValueLabel, description: "把网页内容左右挪一挪，填负数往左；胶囊本身不动")
+        let xBlock = UIStackView(arrangedSubviews: [xCol, sliderRow(slider: xSlider, minus: xMinus, plus: xPlus)])
+        xBlock.axis = .vertical; xBlock.spacing = 10
+        controlsStack.addArrangedSubview(xBlock)
+
+        // 3. 纵向偏移
+        yValueLabel = UILabel(); yValueLabel.text = "0"
+        ySlider = makeSlider(min: -200, max: 200, value: 0)
+        ySlider.addTarget(self, action: #selector(ySliderChanged), for: .valueChanged)
+        let yMinus = roundButton(title: "−"); yMinus.addTarget(self, action: #selector(yMinus), for: .touchUpInside)
+        let yPlus = roundButton(title: "+"); yPlus.addTarget(self, action: #selector(yPlus), for: .touchUpInside)
+        let yCol = controlRow(icon: "arrow.up.arrow.down", title: "纵向偏移", valueLabel: yValueLabel, description: "把网页内容上下挪一挪，填负数往上；胶囊本身不动")
+        let yBlock = UIStackView(arrangedSubviews: [yCol, sliderRow(slider: ySlider, minus: yMinus, plus: yPlus)])
+        yBlock.axis = .vertical; yBlock.spacing = 10
+        controlsStack.addArrangedSubview(yBlock)
+
+        // 4. 内容缩放
+        scaleValueLabel = UILabel(); scaleValueLabel.text = "100"
+        scaleSlider = makeSlider(min: 50, max: 200, value: 100)
+        scaleSlider.addTarget(self, action: #selector(scaleSliderChanged), for: .valueChanged)
+        let sMinus = roundButton(title: "−"); sMinus.addTarget(self, action: #selector(scaleMinus), for: .touchUpInside)
+        let sPlus = roundButton(title: "+"); sPlus.addTarget(self, action: #selector(scalePlus), for: .touchUpInside)
+        let sCol = controlRow(icon: "arrow.up.left.and.arrow.down.right", title: "内容缩放", valueLabel: scaleValueLabel, description: "把网页内容放大或缩小，100 是原样；胶囊本身不变")
+        let sBlock = UIStackView(arrangedSubviews: [sCol, sliderRow(slider: scaleSlider, minus: sMinus, plus: sPlus)])
+        sBlock.axis = .vertical; sBlock.spacing = 10
+        controlsStack.addArrangedSubview(sBlock)
+
+        // 5. 背景透明度 (stepper only, no slider, as in screenshot)
+        bgValueLabel = UILabel(); bgValueLabel.text = "0"
+        let bgMinus = roundButton(title: "−"); bgMinus.addTarget(self, action: #selector(bgMinus), for: .touchUpInside)
+        let bgPlus = roundButton(title: "+"); bgPlus.addTarget(self, action: #selector(bgPlus), for: .touchUpInside)
+        let bgCol = controlRow(icon: "paintpalette", title: "背景透明度", valueLabel: bgValueLabel, description: "网页没画东西的地方透出的底色，0 是完全透明，100 是实色")
+        let bgRow = UIStackView(arrangedSubviews: [bgMinus, bgPlus])
+        bgRow.axis = .horizontal; bgRow.spacing = 12; bgRow.alignment = .center
+        let bgSpacer = UIView()
+        let bgControls = UIStackView(arrangedSubviews: [bgSpacer, bgRow])
+        bgControls.axis = .horizontal; bgControls.spacing = 12
+        let bgBlock = UIStackView(arrangedSubviews: [bgCol, bgControls])
+        bgBlock.axis = .vertical; bgBlock.spacing = 10
+        controlsStack.addArrangedSubview(bgBlock)
+
+        // 6. 网页可交互
+        let swLabel = UILabel(); swLabel.text = "开"
+        interactiveSwitch = UISwitch()
+        interactiveSwitch.isOn = true
+        interactiveSwitch.addTarget(self, action: #selector(interactiveChanged), for: .valueChanged)
+        let swCol = controlRow(icon: "message", title: "网页可交互", valueLabel: swLabel, description: "关 = 网页只是装饰，点它等于点到后面的东西；开 = 网页自己接着点击")
+        // Replace the value label in the header with the switch: rebuild header row simply by appending switch to the block.
+        let swRow = UIStackView(arrangedSubviews: [swCol, interactiveSwitch])
+        swRow.axis = .horizontal; swRow.spacing = 12; swRow.alignment = .center
+        controlsStack.addArrangedSubview(swRow)
+
+        // Height callbacks: light preview drives the default; dark mirrors it.
+        lightCapsule.preview.onHeightMeasured = { [weak self] h in self?.measuredHeightChanged(h) }
+        darkCapsule.preview.onHeightMeasured = { [weak self] h in self?.measuredHeightChanged(h) }
+    }
+
+    private func measuredHeightChanged(_ h: CGFloat) {
+        guard h > 0 else { return }
+        // Take the larger of the two previews (same content, should match).
+        if h > measuredContentHeight { measuredContentHeight = h }
+        if fixedCardHeight == nil {
+            heightSlider.value = Float(measuredContentHeight)
+            heightValueLabel.text = "\(Int(measuredContentHeight))"
+            applyAdjustments()
+        }
+    }
+
+    private func applyAdjustments() {
+        let capsuleHeight = fixedCardHeight ?? measuredContentHeight
+        for capsule in [lightCapsule, darkCapsule] {
+            capsule.setCapsuleHeight(capsuleHeight)
+            capsule.setBackgroundAlpha(backgroundAlphaPercent / 100)
+            capsule.preview.applyTransform(offsetX: horizontalOffset, offsetY: verticalOffset, scale: contentScalePercent / 100)
+            capsule.preview.setInteractive(webInteractive)
+        }
+    }
+
+    private func setHeight(_ v: CGFloat) {
+        let clamped = min(max(v, 0), 1000)
+        fixedCardHeight = clamped
+        heightSlider.value = Float(clamped)
+        heightValueLabel.text = "\(Int(clamped))"
+        applyAdjustments()
+    }
+
+    @objc private func heightSliderChanged() { setHeight(CGFloat(heightSlider.value)) }
+    @objc private func heightMinus() { setHeight((fixedCardHeight ?? measuredContentHeight) - 10) }
+    @objc private func heightPlus() { setHeight((fixedCardHeight ?? measuredContentHeight) + 10) }
+
+    @objc private func xSliderChanged() { horizontalOffset = CGFloat(xSlider.value); xValueLabel.text = "\(Int(horizontalOffset))"; applyAdjustments() }
+    @objc private func xMinus() { xSlider.value -= 10; xSliderChanged() }
+    @objc private func xPlus() { xSlider.value += 10; xSliderChanged() }
+
+    @objc private func ySliderChanged() { verticalOffset = CGFloat(ySlider.value); yValueLabel.text = "\(Int(verticalOffset))"; applyAdjustments() }
+    @objc private func yMinus() { ySlider.value -= 10; ySliderChanged() }
+    @objc private func yPlus() { ySlider.value += 10; ySliderChanged() }
+
+    @objc private func scaleSliderChanged() { contentScalePercent = CGFloat(scaleSlider.value); scaleValueLabel.text = "\(Int(contentScalePercent))"; applyAdjustments() }
+    @objc private func scaleMinus() { scaleSlider.value -= 10; scaleSliderChanged() }
+    @objc private func scalePlus() { scaleSlider.value += 10; scaleSliderChanged() }
+
+    @objc private func bgMinus() { backgroundAlphaPercent = min(max(backgroundAlphaPercent - 10, 0), 100); bgValueLabel.text = "\(Int(backgroundAlphaPercent))"; applyAdjustments() }
+    @objc private func bgPlus() { backgroundAlphaPercent = min(max(backgroundAlphaPercent + 10, 0), 100); bgValueLabel.text = "\(Int(backgroundAlphaPercent))"; applyAdjustments() }
+
+    @objc private func interactiveChanged() { webInteractive = interactiveSwitch.isOn; applyAdjustments() }
+
+    private func resetAdjustmentsForNewFile() {
+        measuredContentHeight = 0
+        fixedCardHeight = nil
+        heightSlider.value = 0
+        heightValueLabel.text = "0"
+        // Other controls are global user preferences and stay as set.
+        applyAdjustments()
+    }
+
     // MARK: State updates
 
     private func updateForNoFile() {
@@ -265,6 +511,7 @@ final class MainViewController: UIViewController {
         emptyLabel.isHidden = false
         lightCapsule.isHidden = true
         darkCapsule.isHidden = true
+        controlsContainer.isHidden = true
         footerLabel.isHidden = true
         clearButton.isEnabled = false
         shareButton.isEnabled = false
@@ -277,6 +524,7 @@ final class MainViewController: UIViewController {
         emptyLabel.isHidden = true
         lightCapsule.isHidden = false
         darkCapsule.isHidden = false
+        controlsContainer.isHidden = false
         footerLabel.isHidden = false
         clearButton.isEnabled = true
         shareButton.isEnabled = true
@@ -390,6 +638,7 @@ extension MainViewController: UIDocumentPickerDelegate {
                     ? String(format: "%.1f MB · 上浅下深 · 高度跟随内容", kb / 1024.0)
                     : String(format: "%.1f KB · 上浅下深 · 高度跟随内容", kb)
                 updateForFile(name: url.lastPathComponent, sizeText: sizeText)
+                resetAdjustmentsForNewFile()
                 renderPreviews()
             case .font:
                 let name = url.lastPathComponent
