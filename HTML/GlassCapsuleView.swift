@@ -1,6 +1,21 @@
 import UIKit
 
-// MARK: - GlassCapsuleView (Build 8: native liquid glass capsule)
+// MARK: - GlassCapsuleView (Build 10: native liquid glass capsule, VISIBLE)
+//
+// Build 10 (user, Build 9 device test: "液态玻璃在哪我请问？"):
+// honest cause — the glass existed in code in Build 9 but was
+// invisible on device, because it was completely covered: the
+// capsule height was locked to exactly the content height, the
+// card background layer at default 100 was solid white/black and
+// filled the content area, and the HTML card's own background
+// filled it too. Glass behind opaque content, with zero margin
+// around the content, has nowhere to show. That is fixed here,
+// not just restated: the content now sits inside the glass
+// capsule with a visible glass margin on all sides (see
+// glassMargin below). Capsule size = content size + 2 * margin,
+// so a glass frame is visible around the card against the
+// light-grey page. The card background layer stays content-sized
+// only (PreviewWebView), so it never extends into the margin.
 //
 // Build 8 correction, per the user's follow-up ("在这两个位置加一个
 // 原生液态玻璃的胶囊卡片，不要自绘的"): the two preview positions —
@@ -69,6 +84,13 @@ final class GlassCapsuleView: UIView {
 
     let preview: PreviewWebView
 
+    /// Build 10 visible glass margin, all sides, in points.
+    /// Clearly visible but not huge. The capsule height lock in
+    /// MainViewController locks capsule height to content height
+    /// + 2 * glassMargin, so this frame is present by default,
+    /// not only when the user enlarges the capsule manually.
+    static let glassMargin: CGFloat = 16
+
     private let kind: Kind
     private let glassView: UIVisualEffectView
     private var capsuleHeightConstraint: NSLayoutConstraint?
@@ -87,6 +109,8 @@ final class GlassCapsuleView: UIView {
     /// Changing this height never resizes, scales or stretches the
     /// content (see the header comment): it only changes how much
     /// native glass shows around the original-size content.
+    /// Build 10: callers pass content height + 2 * glassMargin for
+    /// the default lock, so the 16pt frame is visible on all sides.
     func setCapsuleHeight(_ height: CGFloat) {
         let h = max(height, 0)
         if let c = capsuleHeightConstraint {
@@ -155,17 +179,23 @@ final class GlassCapsuleView: UIView {
         ])
 
         // Content lives in the glass effect view's contentView, on top
-        // of the glass, top-aligned, at its own measured height.
-        // Pinning its bottom as well would force it to stretch to the
-        // capsule height and break content-size independence.
+        // of the glass, top-aligned, at its own measured height,
+        // inset by glassMargin on every side (Build 10). Pinning its
+        // bottom as well would force it to stretch to the capsule
+        // height and break content-size independence, and pinning
+        // it flush (0pt inset, Build 9) left the glass with nowhere
+        // to show. The bottom is deliberately unpinned: the glass
+        // frame below the content is capsule height minus content
+        // height minus the top margin, and is visible because the
+        // capsule height is locked to content + 2 * margin.
         glassView.contentView.addSubview(preview)
         preview.translatesAutoresizingMaskIntoConstraints = false
         preview.layer.cornerRadius = 0
         preview.clipsToBounds = true
         NSLayoutConstraint.activate([
-            preview.leadingAnchor.constraint(equalTo: glassView.contentView.leadingAnchor),
-            preview.trailingAnchor.constraint(equalTo: glassView.contentView.trailingAnchor),
-            preview.topAnchor.constraint(equalTo: glassView.contentView.topAnchor),
+            preview.leadingAnchor.constraint(equalTo: glassView.contentView.leadingAnchor, constant: Self.glassMargin),
+            preview.trailingAnchor.constraint(equalTo: glassView.contentView.trailingAnchor, constant: -Self.glassMargin),
+            preview.topAnchor.constraint(equalTo: glassView.contentView.topAnchor, constant: Self.glassMargin),
         ])
         // Definite initial height so the capsule is not ambiguous
         // before the first measured height arrives.
