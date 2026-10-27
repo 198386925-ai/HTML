@@ -1,6 +1,20 @@
 import UIKit
 
-// MARK: - GlassCapsuleView (Build 10: native liquid glass capsule, VISIBLE)
+// MARK: - GlassCapsuleView (Build 11: native liquid glass is the WHOLE card background)
+//
+// Build 11 (user, Build 10 device test: "液态玻璃在哪我请问？"):
+// Build 10's 16pt frame still read as solid white/black on device,
+// because the card background layer (default 100) and the uploaded
+// card's own outer background covered the glass across the whole
+// card. In Build 11 the glass fills the entire capsule AND the
+// preview content's own backgrounds are transparent (see
+// PreviewWebView processedHTML, outer layers only, and
+// MainViewController default background transparency 0), so the
+// glass shows across the whole card and text/icons float directly
+// on it. The 16pt margin is kept — it now adds extra glass area
+// around the content instead of being the only glass area — and
+// the card-background control (step 5) can still make the card
+// background more solid, but that is never the default.
 //
 // Build 10 (user, Build 9 device test: "液态玻璃在哪我请问？"):
 // honest cause — the glass existed in code in Build 9 but was
