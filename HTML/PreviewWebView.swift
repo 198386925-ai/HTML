@@ -140,7 +140,7 @@ final class PreviewWebView: UIView {
         reportMeasuredHeight(0)
     }
 
-    private func reportMeasuredHeight(_ height: CGFloat) {
+    func reportMeasuredHeight(_ height: CGFloat) {
         // Clamp only the degenerate cases: a failed measurement (0) and
         // absurd values from a runaway script. Real card content is
         // typically well under 3000pt; a genuinely long page still grows
