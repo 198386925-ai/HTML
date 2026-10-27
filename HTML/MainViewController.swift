@@ -48,11 +48,13 @@ final class MainViewController: UIViewController {
     private var horizontalOffset: CGFloat = 0
     private var verticalOffset: CGFloat = 0
     private var contentScalePercent: CGFloat = 100
-    // Build 8 (glass correction): default 100 (full native glass).
-    // Build 5's 100 meant solid pure white / pure black; Build 8's
-    // 100 means full native liquid glass (see GlassCapsuleView).
-    // The solid backgrounds are gone at every value — the control
-    // now adjusts glass tint, it never paints white/black.
+    // Build 9 correction: default 100 = card background fully
+    // solid (scheme colour behind the content). The native liquid
+    // glass capsule is ALWAYS present at full tint, whatever this
+    // value is — this control adjusts only the card background
+    // layer (PreviewWebView.cardBackgroundView), never the glass
+    // and never the content. 0 = card background fully transparent
+    // (glass behind shows through where the card drew nothing).
     private var backgroundAlphaPercent: CGFloat = 100
     private var webInteractive: Bool = true
 
@@ -528,10 +530,11 @@ final class MainViewController: UIViewController {
         controlsStack.addArrangedSubview(sBlock)
 
         // 5. 背景透明度 (stepper only, no slider, as in screenshot)
-        // Build 8 default 100 (full native glass, not solid colour).
+        // Build 9 default 100 (card background fully solid).
         // The control is kept, on the TITLE row itself, on ONE line
         // with icon + title + value — no separate button row below —
-        // step 5, and it adjusts glass tint, never a solid colour.
+        // step 5, and it adjusts ONLY the card background layer,
+        // never the native glass and never the content.
         bgValueLabel = UILabel(); bgValueLabel.text = "100"
         let bgMinusBtn = roundButton(title: "−"); bgMinusBtn.addTarget(self, action: #selector(bgMinus), for: .touchUpInside)
         let bgPlusBtn = roundButton(title: "+"); bgPlusBtn.addTarget(self, action: #selector(bgPlus), for: .touchUpInside)
@@ -553,7 +556,7 @@ final class MainViewController: UIViewController {
         let bgHeader = UIStackView(arrangedSubviews: [bgIconView, bgTitleLabel, bgValueLabel, bgMinusBtn, bgPlusBtn])
         bgHeader.axis = .horizontal; bgHeader.spacing = 8; bgHeader.alignment = .center
         let bgDesc = UILabel()
-        bgDesc.text = "玻璃的透明度，0 是完全透明，100 是完整玻璃"
+        bgDesc.text = "网页没画东西的地方透出的底色，0 是完全透明，100 是实色"
         bgDesc.font = .preferredFont(forTextStyle: .caption1)
         bgDesc.textColor = .darkGray
         bgDesc.numberOfLines = 1
@@ -610,7 +613,7 @@ final class MainViewController: UIViewController {
         let capsuleHeight = fixedCardHeight ?? measuredContentHeight
         for capsule in [lightCapsule, darkCapsule] {
             capsule.setCapsuleHeight(capsuleHeight)
-            capsule.setBackgroundAlpha(backgroundAlphaPercent / 100)
+            capsule.setCardBackgroundAlpha(backgroundAlphaPercent / 100)
             capsule.preview.applyTransform(offsetX: horizontalOffset, offsetY: verticalOffset, scale: contentScalePercent / 100)
             capsule.preview.setInteractive(webInteractive)
         }
@@ -657,8 +660,8 @@ final class MainViewController: UIViewController {
         capsuleHeightLocked = false
         heightSlider.value = 0
         heightValueLabel.text = "0"
-        // Build 8: a new file resets background transparency to
-        // 100 (full native glass).
+        // Build 9: a new file resets background transparency to
+        // 100 (card background fully solid; glass stays present).
         backgroundAlphaPercent = 100
         bgValueLabel.text = "100"
         // Other controls are global user preferences and stay as set.
