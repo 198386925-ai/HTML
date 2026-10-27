@@ -66,14 +66,16 @@ final class MainViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Background removal (user's first step): no solid page
-        // background at all — not white, not grey. The view and the
-        // scroll view are clear, so the glass capsules are the
-        // visible surfaces instead of a painted page background.
-        // Top-bar labels/buttons keep their own system colours;
-        // only the page background is removed.
-        view.backgroundColor = .clear
-        scrollView.backgroundColor = .clear
+        // Build 3 (user: "改纯色啊"): solid light-grey page background,
+        // forced to light appearance so it stays light grey even when
+        // the device is in system dark mode. In Build 2 the page had
+        // no background at all, so in dark mode the whole page was
+        // black and dark-grey top text on black was unreadable.
+        // Forcing .light here also forces .label/.secondaryLabel to
+        // their dark-on-light values, so top text stays readable.
+        overrideUserInterfaceStyle = .light
+        view.backgroundColor = UIColor(red: 0.91, green: 0.91, blue: 0.92, alpha: 1.0) // #E8E8EC
+        scrollView.backgroundColor = UIColor(red: 0.91, green: 0.91, blue: 0.92, alpha: 1.0)
         buildLayout()
         updateForNoFile()
     }
@@ -98,7 +100,7 @@ final class MainViewController: UIViewController {
     private func buildLayout() {
         titleLabel.text = "HTML"
         titleLabel.font = .preferredFont(forTextStyle: .largeTitle)
-        titleLabel.textColor = .label
+        titleLabel.textColor = .black
         titleLabel.numberOfLines = 1
 
         // Web layout 1:1, UIKit only: black </> file icon, then
@@ -112,17 +114,17 @@ final class MainViewController: UIViewController {
         fileIconLabel.textAlignment = .center
 
         fileNameLabel.font = .preferredFont(forTextStyle: .headline)
-        fileNameLabel.textColor = .label
+        fileNameLabel.textColor = .black
         fileNameLabel.numberOfLines = 1
         fileNameLabel.lineBreakMode = .byTruncatingMiddle
 
         fileSizeLabel.font = .preferredFont(forTextStyle: .subheadline)
-        fileSizeLabel.textColor = .secondaryLabel
+        fileSizeLabel.textColor = .darkGray
         fileSizeLabel.numberOfLines = 1
 
         footerLabel.text = "上：浅色 · 下：深色 · 高度已贴合内容"
         footerLabel.font = .preferredFont(forTextStyle: .subheadline)
-        footerLabel.textColor = .secondaryLabel
+        footerLabel.textColor = .darkGray
         footerLabel.numberOfLines = 1
         footerLabel.textAlignment = .center
         footerLabel.isHidden = true
@@ -158,7 +160,7 @@ final class MainViewController: UIViewController {
 
         emptyLabel.text = "选一个 .html 文件，就会在下面整页预览：上面浅色，下面深色。"
         emptyLabel.font = .preferredFont(forTextStyle: .body)
-        emptyLabel.textColor = .secondaryLabel
+        emptyLabel.textColor = .darkGray
         emptyLabel.numberOfLines = 0
         emptyLabel.textAlignment = .center
 
