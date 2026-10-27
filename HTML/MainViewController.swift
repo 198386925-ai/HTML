@@ -32,13 +32,27 @@ final class MainViewController: UIViewController {
     // MARK: Build 4 adjustment state (global: both previews together)
     private var measuredContentHeight: CGFloat = 0
     private var fixedCardHeight: CGFloat? = nil
+    // Build 8 capsule lock (user: "修改卡片内容时卡片会放大，不许
+    // 卡片乱动"): the FIRST measured height for a file sets the
+    // capsule height once, then locks it. After that, content
+    // changes — new measurement after a font change, a reload after
+    // a location grant, a taller/shorter re-measure — never move the
+    // capsule again. The ONLY entry that changes capsule height
+    // afterwards is the user manually using the 卡片高度 control
+    // (setHeight), which sets fixedCardHeight directly. The preview
+    // inside may still grow/shrink and be clipped by the capsule,
+    // but the capsule's own height constraint, and therefore the
+    // whole page layout (both capsules, toolbar position), never
+    // jumps because content changed.
+    private var capsuleHeightLocked: Bool = false
     private var horizontalOffset: CGFloat = 0
     private var verticalOffset: CGFloat = 0
     private var contentScalePercent: CGFloat = 100
-    // Build 5: default 100 (solid pure white / pure black). Build 4
-    // defaulted to 0 (fully transparent), so the light-grey page
-    // showed through and white text on the dark preview was
-    // almost unreadable on grey.
+    // Build 8 (glass correction): default 100 (full native glass).
+    // Build 5's 100 meant solid pure white / pure black; Build 8's
+    // 100 means full native liquid glass (see GlassCapsuleView).
+    // The solid backgrounds are gone at every value — the control
+    // now adjusts glass tint, it never paints white/black.
     private var backgroundAlphaPercent: CGFloat = 100
     private var webInteractive: Bool = true
 
@@ -90,22 +104,63 @@ final class MainViewController: UIViewController {
     }
     private var currentPickPurpose: PickPurpose = .html
 
-    // MARK: Build 7 location (user: "再给APP获取定位权限")
+    // MARK: Build 7 location, fixed in Build 8 (user: "这个定位权限
+    // 我开启的卡片不显示")
     //
-    // When-In-Use only. Requested at launch and again when a file is
-    // first loaded, but only while the status is .notDetermined, so
-    // the system prompt appears at most once and a denial never loops
-    // into repeated prompts or alerts: on denial the card simply keeps
-    // showing whatever the HTML itself shows ("定位权限未开启" for a
-    // card whose own script reports no location). On grant, previews
-    // re-render once so a page script that calls geolocation on load
-    // gets a chance to succeed with the new authorization.
+    // When-In-Use only. Build 7's bug chain, found on re-reading:
+    // (1) The delegate was only assigned while the status was
+    // .notDetermined, so if the app was already authorized at launch
+    // — or the user granted it in Settings while the app was
+    // backgrounded — no delegate was listening and no reload was ever
+    // triggered on the grant transition. (2) A page script that ran
+    // BEFORE the grant had already printed "定位权限未开启" and would
+    // not re-run on its own. (3) loadHTMLString with baseURL nil
+    // gives the page an opaque about:blank origin, in which WKWebView
+    // geolocation is blocked even when the app is authorized.
+    //
+    // Build 8 fix, all three links:
+    // * Delegate is assigned unconditionally in viewDidLoad, so grant
+    //   transitions are always observed.
+    // * Every appearance and every authorization change runs
+    //   syncLocationAuthorization(): on a transition INTO authorized,
+    //   and only then, the previews reload once with the same file
+    //   and font (nothing is cleared, capsules are not hidden), so
+    //   the page's geolocation code gets a fresh load after the grant.
+    // * PreviewWebView now loads with baseURL https://localhost/ (a
+    //   secure context) instead of nil, so WKWebView geolocation is
+    //   not blocked by an opaque origin. Nothing else about the
+    //   page's resources changes (font is injected inline as before).
+    // * On grant, a one-shot location request warms the system
+    //   location so the webview's lookup has a position to return.
+    // Denial stays silent: no alert, no re-prompt loop, the card
+    // keeps showing whatever its own HTML shows.
+    // Honest limit, unchanged: if the "定位权限未开启" text is
+    // hardcoded in the uploaded HTML (not produced by a geolocation
+    // call), no permission can change it — see the Build 8 report.
     private let locationManager = CLLocationManager()
+    private var lastKnownLocationStatus: CLAuthorizationStatus?
 
     private func requestLocationIfNeeded() {
         guard locationManager.authorizationStatus == .notDetermined else { return }
-        locationManager.delegate = self
         locationManager.requestWhenInUseAuthorization()
+    }
+
+    private func syncLocationAuthorization() {
+        let status = locationManager.authorizationStatus
+        let wasAuthorized = lastKnownLocationStatus == .authorizedWhenInUse
+            || lastKnownLocationStatus == .authorizedAlways
+        let isAuthorized = status == .authorizedWhenInUse || status == .authorizedAlways
+        // Record BEFORE reloading, so the delegate callback fired by
+        // any re-entry cannot trigger a second reload for the same grant.
+        lastKnownLocationStatus = status
+        if isAuthorized && !wasAuthorized {
+            // Fresh grant transition only: one reload, same file/font,
+            // capsules stay visible at their locked height (see
+            // capsuleHeightLocked), so the card never disappears or
+            // goes blank as a layout side effect of the reload.
+            locationManager.requestLocation()
+            if htmlText != nil { renderPreviews() }
+        }
     }
 
     // MARK: Lifecycle
@@ -124,7 +179,21 @@ final class MainViewController: UIViewController {
         scrollView.backgroundColor = UIColor(red: 0.91, green: 0.91, blue: 0.92, alpha: 1.0)
         buildLayout()
         updateForNoFile()
+        // Build 8: delegate assigned unconditionally (see above) —
+        // Build 7 only assigned it while .notDetermined, which is
+        // exactly how an already-granted / Settings-granted app lost
+        // the grant transition.
+        locationManager.delegate = self
+        lastKnownLocationStatus = locationManager.authorizationStatus
         requestLocationIfNeeded()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Build 8: re-check on every appearance, so a grant made in
+        // Settings while the app was backgrounded is picked up when
+        // the user comes back, without needing a relaunch.
+        syncLocationAuthorization()
     }
 
     // MARK: Pill buttons (web layout, UIKit only)
@@ -459,9 +528,10 @@ final class MainViewController: UIViewController {
         controlsStack.addArrangedSubview(sBlock)
 
         // 5. 背景透明度 (stepper only, no slider, as in screenshot)
-        // Build 5 default 100 (solid), not 0.
-        // User correction: the -/+ buttons live on the TITLE row itself,
-        // on ONE line with icon + title + value — no separate button row below.
+        // Build 8 default 100 (full native glass, not solid colour).
+        // The control is kept, on the TITLE row itself, on ONE line
+        // with icon + title + value — no separate button row below —
+        // step 5, and it adjusts glass tint, never a solid colour.
         bgValueLabel = UILabel(); bgValueLabel.text = "100"
         let bgMinusBtn = roundButton(title: "−"); bgMinusBtn.addTarget(self, action: #selector(bgMinus), for: .touchUpInside)
         let bgPlusBtn = roundButton(title: "+"); bgPlusBtn.addTarget(self, action: #selector(bgPlus), for: .touchUpInside)
@@ -483,7 +553,7 @@ final class MainViewController: UIViewController {
         let bgHeader = UIStackView(arrangedSubviews: [bgIconView, bgTitleLabel, bgValueLabel, bgMinusBtn, bgPlusBtn])
         bgHeader.axis = .horizontal; bgHeader.spacing = 8; bgHeader.alignment = .center
         let bgDesc = UILabel()
-        bgDesc.text = "网页没画东西的地方透出的底色，0 是完全透明，100 是实色"
+        bgDesc.text = "玻璃的透明度，0 是完全透明，100 是完整玻璃"
         bgDesc.font = .preferredFont(forTextStyle: .caption1)
         bgDesc.textColor = .darkGray
         bgDesc.numberOfLines = 1
@@ -513,7 +583,16 @@ final class MainViewController: UIViewController {
         guard h > 0 else { return }
         // Take the larger of the two previews (same content, should match).
         if h > measuredContentHeight { measuredContentHeight = h }
-        if fixedCardHeight == nil {
+        // Build 8 lock: only the FIRST measurement for a file may set
+        // the capsule height. Later measurements (font change, reload,
+        // location-grant re-render) update measuredContentHeight for
+        // reference only and never touch the capsule or the slider,
+        // so the capsule cannot grow/shrink or shift the page when
+        // content changes. Manual height changes go through setHeight,
+        // not through here, so they still work after the lock.
+        if !capsuleHeightLocked {
+            capsuleHeightLocked = true
+            fixedCardHeight = measuredContentHeight
             heightSlider.value = Float(measuredContentHeight)
             heightValueLabel.text = "\(Int(measuredContentHeight))"
             applyAdjustments()
@@ -521,6 +600,13 @@ final class MainViewController: UIViewController {
     }
 
     private func applyAdjustments() {
+        // Build 8: capsule height ONLY changes the capsule.
+        // It is never passed to the preview as a content height and
+        // never enters the transform, so content size does not follow
+        // card size: height changes alone neither scale nor resize
+        // the avatar / number / icons / text. Offset still moves the
+        // whole content (position follows) and the manual scale
+        // control still scales it, but only when the user uses it.
         let capsuleHeight = fixedCardHeight ?? measuredContentHeight
         for capsule in [lightCapsule, darkCapsule] {
             capsule.setCapsuleHeight(capsuleHeight)
@@ -567,10 +653,12 @@ final class MainViewController: UIViewController {
     private func resetAdjustmentsForNewFile() {
         measuredContentHeight = 0
         fixedCardHeight = nil
+        // A new file gets one fresh first measurement, then locks again.
+        capsuleHeightLocked = false
         heightSlider.value = 0
         heightValueLabel.text = "0"
-        // Build 5: a new file resets background transparency to
-        // 100 (solid pure white / pure black) by default.
+        // Build 8: a new file resets background transparency to
+        // 100 (full native glass).
         backgroundAlphaPercent = 100
         bgValueLabel.text = "100"
         // Other controls are global user preferences and stay as set.
@@ -694,19 +782,18 @@ final class MainViewController: UIViewController {
 
 extension MainViewController: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        switch manager.authorizationStatus {
-        case .authorizedWhenInUse, .authorizedAlways:
-            // Grant: give a loaded page script one fresh load, so its
-            // geolocation lookup can succeed now. No-op if no file.
-            if htmlText != nil { renderPreviews() }
-        case .denied, .restricted:
-            // Denial is final and silent: no alert, no re-prompt loop.
-            // The card keeps showing whatever its own HTML shows.
-            break
-        default:
-            break
-        }
+        // Build 8: single entry point for grant transitions, shared
+        // with viewWillAppear. It reloads at most once per transition
+        // into authorized, with the same file/font and locked capsule
+        // height, so the card never disappears. Denial is silent.
+        syncLocationAuthorization()
     }
+
+    // One-shot location results are only used to warm the system
+    // location for the webview's geolocation lookup; the app does not
+    // display coordinates itself, so both callbacks are no-ops.
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {}
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {}
 }
 
 // MARK: - UIDocumentPickerDelegate
