@@ -1,4 +1,11 @@
-name: Build LUIYoAdmin IPA
+# STAGED COPY ONLY — DO NOT PUSH THIS FILE VIA THE GITHUB API.
+# The stored GitHub token is repo-scope only (no workflow scope), so an
+# API push of .github/workflows/* returns 404. Add this file in the
+# GitHub web UI instead (repository -> Add file -> Create new file, or
+# edit the existing build-ipa.yml there), pasting the content below
+# the comment lines. It is the existing LUIYoAdmin workflow with only
+# the app/project/IPA names changed to HTML; everything else is kept.
+name: Build HTML IPA
 
 on:
   workflow_dispatch:
@@ -9,7 +16,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: luiyoadmin-ipa-main
+  group: html-ipa-main
   cancel-in-progress: true
 
 jobs:
@@ -31,8 +38,8 @@ jobs:
           set -euo pipefail
           echo "Building repository source at $GITHUB_SHA"
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-          test -f LUIYoAdmin.xcodeproj/project.pbxproj
-          test -f LUIYoAdmin.xcodeproj/xcshareddata/xcschemes/LUIYoAdmin.xcscheme
+          test -f HTML.xcodeproj/project.pbxproj
+          test -f HTML.xcodeproj/xcshareddata/xcschemes/HTML.xcscheme
           test -f scripts/build-ipa.sh
           git status --short
       - name: Build unsigned IPA from repository source
@@ -45,5 +52,5 @@ jobs:
       - name: Save IPA and source backup
         uses: actions/upload-artifact@v4
         with:
-          name: LUIYoAdmin-IPA-and-source
+          name: HTML-IPA-and-source
           path: output/
