@@ -19,7 +19,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.0.0</string>
 	<key>CFBundleVersion</key>
-	<string>9</string>
+	<string>10</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>需要定位权限，才能在预览卡片里显示真实位置，而不是一直显示“定位权限未开启”。</string>
 	<key>LSRequiresIPhoneOS</key>
