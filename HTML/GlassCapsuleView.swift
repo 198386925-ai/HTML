@@ -73,17 +73,15 @@ final class GlassCapsuleView: UIView {
     private let glassView: UIVisualEffectView
     private var capsuleHeightConstraint: NSLayoutConstraint?
 
-    private var baseTint: UIColor {
-        switch kind {
-        case .light: return .white
-        case .dark: return .black
-        }
-    }
-
     // Build 9: the glass effect is created ONCE at full tint and
     // never changed afterwards. There is deliberately no tint-alpha
     // parameter anywhere: background transparency must never turn
     // the glass off, fade it, or change its tint.
+    // NOTE: do NOT read a computed self property (e.g. a baseTint
+    // helper) in init before super.init — Swift rejects 'self' used
+    // before super.init (that was the Build 9 first-run failure).
+    // The tint below therefore uses the already-assigned `kind`
+    // stored property directly, as the original code did.
 
     /// Capsule height, independent of the web content height.
     /// Changing this height never resizes, scales or stretches the
@@ -127,7 +125,7 @@ final class GlassCapsuleView: UIView {
         // not touch the glass at all).
         let initialEffect = UIGlassEffect(style: .regular)
         initialEffect.isInteractive = false
-        initialEffect.tintColor = baseTint
+        initialEffect.tintColor = kind == .light ? .white : .black
         self.glassView = UIVisualEffectView(effect: initialEffect)
         super.init(frame: .zero)
 
