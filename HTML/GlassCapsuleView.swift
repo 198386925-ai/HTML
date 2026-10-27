@@ -99,11 +99,20 @@ final class GlassCapsuleView: UIView {
     let preview: PreviewWebView
 
     /// Build 10 visible glass margin, all sides, in points.
-    /// Clearly visible but not huge. The capsule height lock in
-    /// MainViewController locks capsule height to content height
-    /// + 2 * glassMargin, so this frame is present by default,
-    /// not only when the user enlarges the capsule manually.
+    /// Clearly visible but not huge.
     static let glassMargin: CGFloat = 16
+
+    /// Build 12 (user: "这个一直显示在这，没有导入html也要显示"
+    /// + "不支持修改这个高度，那工具栏只是调卡片的"): the glass
+    /// capsule height is FIXED at this value, on launch, on import,
+    /// on clear and on every toolbar adjustment. It is never set
+    /// from measured content height and never changed by the
+    /// 卡片高度 control — that control now changes only the inner
+    /// HTML card content height inside the capsule (see
+    /// MainViewController + PreviewWebView.setDisplayedContentHeight).
+    /// 96pt matches the picture's proportions (two pills on the
+    /// light-grey page, with the usual gap between them).
+    static let fixedCapsuleHeight: CGFloat = 96
 
     private let kind: Kind
     private let glassView: UIVisualEffectView
@@ -120,11 +129,9 @@ final class GlassCapsuleView: UIView {
     // stored property directly, as the original code did.
 
     /// Capsule height, independent of the web content height.
-    /// Changing this height never resizes, scales or stretches the
-    /// content (see the header comment): it only changes how much
-    /// native glass shows around the original-size content.
-    /// Build 10: callers pass content height + 2 * glassMargin for
-    /// the default lock, so the 16pt frame is visible on all sides.
+    /// Build 12: this is ONLY for the initial fixed height. The
+    /// toolbar must never call it again — capsule height is fixed
+    /// at fixedCapsuleHeight and only the inner card height changes.
     func setCapsuleHeight(_ height: CGFloat) {
         let h = max(height, 0)
         if let c = capsuleHeightConstraint {
@@ -211,9 +218,10 @@ final class GlassCapsuleView: UIView {
             preview.trailingAnchor.constraint(equalTo: glassView.contentView.trailingAnchor, constant: -Self.glassMargin),
             preview.topAnchor.constraint(equalTo: glassView.contentView.topAnchor, constant: Self.glassMargin),
         ])
-        // Definite initial height so the capsule is not ambiguous
-        // before the first measured height arrives.
-        setCapsuleHeight(120)
+        // Build 12: definite FIXED height, so the empty glass
+        // capsule is visible on launch with no file imported, and
+        // stays exactly this height forever (see fixedCapsuleHeight).
+        setCapsuleHeight(Self.fixedCapsuleHeight)
     }
 
     @available(*, unavailable)
