@@ -51,9 +51,15 @@ import UIKit
 //   native glass — not replacing them with nothing. There is no
 //   solid white/black background in this file at any value.
 //
+// Build 9 correction (user: "液态玻璃不是背景透明度啊，背景透明度
+// 调的是卡片的透明度"): glass and card-background transparency are
+// SEPARATE. The glass below is ALWAYS present at full tint, whatever
+// the background-transparency value is. That control now adjusts
+// only the card background layer inside PreviewWebView (see
+// setCardBackgroundAlpha), never the glass, never the content.
 // The class name is kept unchanged so MainViewController needs no
 // changes for this file's API (preview, setCapsuleHeight,
-// setBackgroundAlpha).
+// setCardBackgroundAlpha).
 final class GlassCapsuleView: UIView {
 
     enum Kind {
@@ -74,12 +80,10 @@ final class GlassCapsuleView: UIView {
         }
     }
 
-    private func makeGlassEffect(tintAlpha: CGFloat) -> UIGlassEffect {
-        let effect = UIGlassEffect(style: .regular)
-        effect.isInteractive = false
-        effect.tintColor = baseTint.withAlphaComponent(tintAlpha)
-        return effect
-    }
+    // Build 9: the glass effect is created ONCE at full tint and
+    // never changed afterwards. There is deliberately no tint-alpha
+    // parameter anywhere: background transparency must never turn
+    // the glass off, fade it, or change its tint.
 
     /// Capsule height, independent of the web content height.
     /// Changing this height never resizes, scales or stretches the
@@ -97,22 +101,17 @@ final class GlassCapsuleView: UIView {
     }
 
     /// Background transparency control (title line, step 5).
-    /// This no longer paints any solid colour. It adjusts the native
-    /// glass itself, without touching the content above it:
-    /// * 0 = glass effect removed (glass fully transparent, content
-    ///   alone remains — the effect view's contentView is untouched,
-    ///   so the content does NOT fade out with the glass).
-    /// * >0 = native glass present, with the tint alpha proportional
-    ///   to the value; 100 = full native glass with full tint.
-    /// Setting the effect view's own alpha would also fade the
-    /// content inside it, so it is deliberately not used here.
-    func setBackgroundAlpha(_ alpha: CGFloat) {
-        let a = min(max(alpha, 0), 1)
-        if a <= 0 {
-            glassView.effect = nil
-        } else {
-            glassView.effect = makeGlassEffect(tintAlpha: a)
-        }
+    /// Build 9: this adjusts ONLY the card background layer inside
+    /// the preview (PreviewWebView.setCardBackgroundAlpha). The
+    /// glass effect view is never touched here — not its effect,
+    /// not its tint, not its alpha — so the native glass stays
+    /// fully present at every transparency value, and the content
+    /// (text, avatar, icons) is never faded either. 0 = card
+    /// background fully transparent (glass behind shows through
+    /// where the card drew nothing); 100 = card background fully
+    /// solid (scheme colour behind the content).
+    func setCardBackgroundAlpha(_ alpha: CGFloat) {
+        preview.setCardBackgroundAlpha(alpha)
     }
 
     init(kind: Kind) {
@@ -123,11 +122,12 @@ final class GlassCapsuleView: UIView {
         case .dark:
             self.preview = PreviewWebView(scheme: .dark)
         }
-        // Native glass, created once with full tint; setBackgroundAlpha
-        // (called by applyAdjustments) keeps it in sync with the control.
+        // Native glass, created once with full tint and never
+        // changed afterwards (Build 9: background transparency does
+        // not touch the glass at all).
         let initialEffect = UIGlassEffect(style: .regular)
         initialEffect.isInteractive = false
-        initialEffect.tintColor = kind == .light ? .white : .black
+        initialEffect.tintColor = baseTint
         self.glassView = UIVisualEffectView(effect: initialEffect)
         super.init(frame: .zero)
 
