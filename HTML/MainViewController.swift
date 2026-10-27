@@ -34,7 +34,11 @@ final class MainViewController: UIViewController {
     private var horizontalOffset: CGFloat = 0
     private var verticalOffset: CGFloat = 0
     private var contentScalePercent: CGFloat = 100
-    private var backgroundAlphaPercent: CGFloat = 0
+    // Build 5: default 100 (solid pure white / pure black). Build 4
+    // defaulted to 0 (fully transparent), so the light-grey page
+    // showed through and white text on the dark preview was
+    // almost unreadable on grey.
+    private var backgroundAlphaPercent: CGFloat = 100
     private var webInteractive: Bool = true
 
     // Controls section views (built in buildControls()).
@@ -283,18 +287,21 @@ final class MainViewController: UIViewController {
 
     // MARK: Build 4 controls (below the previews, global to both)
 
+    // Build 5: -/+ buttons smaller (38pt, was 44pt and looked
+    // ~60pt in the Build 4 screenshot layout) so the slider gets
+    // longer; slider thumb also smaller to match.
     private func roundButton(title: String) -> UIButton {
         let b = UIButton(type: .system)
         b.setTitle(title, for: .normal)
-        b.titleLabel?.font = .systemFont(ofSize: 22, weight: .medium)
+        b.titleLabel?.font = .systemFont(ofSize: 18, weight: .medium)
         b.backgroundColor = .systemGray5
         b.setTitleColor(.black, for: .normal)
-        b.layer.cornerRadius = 22
+        b.layer.cornerRadius = 19
         b.clipsToBounds = true
         b.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            b.widthAnchor.constraint(equalToConstant: 44),
-            b.heightAnchor.constraint(equalToConstant: 44),
+            b.widthAnchor.constraint(equalToConstant: 38),
+            b.heightAnchor.constraint(equalToConstant: 38),
         ])
         return b
     }
@@ -306,6 +313,21 @@ final class MainViewController: UIViewController {
         s.value = value
         s.minimumTrackTintColor = .black
         s.maximumTrackTintColor = .systemGray4
+        // Small thumb (20pt white circle) to match the smaller buttons.
+        let size = CGSize(width: 20, height: 20)
+        UIGraphicsBeginImageContextWithOptions(size, false, 0)
+        let ctx = UIGraphicsGetCurrentContext()
+        ctx?.setFillColor(UIColor.white.cgColor)
+        ctx?.fillEllipse(in: CGRect(origin: .zero, size: size))
+        ctx?.setStrokeColor(UIColor.systemGray3.cgColor)
+        ctx?.setLineWidth(1)
+        ctx?.strokeEllipse(in: CGRect(origin: .zero, size: size).insetBy(dx: 0.5, dy: 0.5))
+        let thumb = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        if let thumb = thumb {
+            s.setThumbImage(thumb, for: .normal)
+            s.setThumbImage(thumb, for: .highlighted)
+        }
         return s
     }
 
@@ -414,7 +436,8 @@ final class MainViewController: UIViewController {
         controlsStack.addArrangedSubview(sBlock)
 
         // 5. 背景透明度 (stepper only, no slider, as in screenshot)
-        bgValueLabel = UILabel(); bgValueLabel.text = "0"
+        // Build 5 default 100 (solid), not 0.
+        bgValueLabel = UILabel(); bgValueLabel.text = "100"
         let bgMinusBtn = roundButton(title: "−"); bgMinusBtn.addTarget(self, action: #selector(bgMinus), for: .touchUpInside)
         let bgPlusBtn = roundButton(title: "+"); bgPlusBtn.addTarget(self, action: #selector(bgPlus), for: .touchUpInside)
         let bgCol = controlRow(icon: "paintpalette", title: "背景透明度", valueLabel: bgValueLabel, description: "网页没画东西的地方透出的底色，0 是完全透明，100 是实色")
@@ -472,24 +495,26 @@ final class MainViewController: UIViewController {
         applyAdjustments()
     }
 
+    // Build 5: every -/+ button steps by exactly 1 per tap.
+    // Slider drag still moves continuously; buttons are strictly +/-1.
     @objc private func heightSliderChanged() { setHeight(CGFloat(heightSlider.value)) }
-    @objc private func heightMinus() { setHeight((fixedCardHeight ?? measuredContentHeight) - 10) }
-    @objc private func heightPlus() { setHeight((fixedCardHeight ?? measuredContentHeight) + 10) }
+    @objc private func heightMinus() { setHeight((fixedCardHeight ?? measuredContentHeight) - 1) }
+    @objc private func heightPlus() { setHeight((fixedCardHeight ?? measuredContentHeight) + 1) }
 
     @objc private func xSliderChanged() { horizontalOffset = CGFloat(xSlider.value); xValueLabel.text = "\(Int(horizontalOffset))"; applyAdjustments() }
-    @objc private func xMinus() { xSlider.value -= 10; xSliderChanged() }
-    @objc private func xPlus() { xSlider.value += 10; xSliderChanged() }
+    @objc private func xMinus() { xSlider.value -= 1; xSliderChanged() }
+    @objc private func xPlus() { xSlider.value += 1; xSliderChanged() }
 
     @objc private func ySliderChanged() { verticalOffset = CGFloat(ySlider.value); yValueLabel.text = "\(Int(verticalOffset))"; applyAdjustments() }
-    @objc private func yMinus() { ySlider.value -= 10; ySliderChanged() }
-    @objc private func yPlus() { ySlider.value += 10; ySliderChanged() }
+    @objc private func yMinus() { ySlider.value -= 1; ySliderChanged() }
+    @objc private func yPlus() { ySlider.value += 1; ySliderChanged() }
 
     @objc private func scaleSliderChanged() { contentScalePercent = CGFloat(scaleSlider.value); scaleValueLabel.text = "\(Int(contentScalePercent))"; applyAdjustments() }
-    @objc private func scaleMinus() { scaleSlider.value -= 10; scaleSliderChanged() }
-    @objc private func scalePlus() { scaleSlider.value += 10; scaleSliderChanged() }
+    @objc private func scaleMinus() { scaleSlider.value -= 1; scaleSliderChanged() }
+    @objc private func scalePlus() { scaleSlider.value += 1; scaleSliderChanged() }
 
-    @objc private func bgMinus() { backgroundAlphaPercent = min(max(backgroundAlphaPercent - 10, 0), 100); bgValueLabel.text = "\(Int(backgroundAlphaPercent))"; applyAdjustments() }
-    @objc private func bgPlus() { backgroundAlphaPercent = min(max(backgroundAlphaPercent + 10, 0), 100); bgValueLabel.text = "\(Int(backgroundAlphaPercent))"; applyAdjustments() }
+    @objc private func bgMinus() { backgroundAlphaPercent = min(max(backgroundAlphaPercent - 1, 0), 100); bgValueLabel.text = "\(Int(backgroundAlphaPercent))"; applyAdjustments() }
+    @objc private func bgPlus() { backgroundAlphaPercent = min(max(backgroundAlphaPercent + 1, 0), 100); bgValueLabel.text = "\(Int(backgroundAlphaPercent))"; applyAdjustments() }
 
     @objc private func interactiveChanged() { webInteractive = interactiveSwitch.isOn; applyAdjustments() }
 
@@ -498,6 +523,10 @@ final class MainViewController: UIViewController {
         fixedCardHeight = nil
         heightSlider.value = 0
         heightValueLabel.text = "0"
+        // Build 5: a new file resets background transparency to
+        // 100 (solid pure white / pure black) by default.
+        backgroundAlphaPercent = 100
+        bgValueLabel.text = "100"
         // Other controls are global user preferences and stay as set.
         applyAdjustments()
     }
