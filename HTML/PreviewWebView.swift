@@ -260,13 +260,21 @@ final class PreviewWebView: UIView {
         // rules (media queries, color-scheme-aware controls) should use.
         injection += "<meta name=\"color-scheme\" content=\"\(scheme.cssValue)\">"
         injection += "<style data-preview-scheme=\"1\">:root { color-scheme: \(scheme.cssValue); } html { color-scheme: \(scheme.cssValue); }</style>"
-        // Background removal, html/body only: make the page's root
-        // backgrounds transparent so the native system glass behind
-        // this webview becomes the card's background. Inner elements
-        // (text, icons, card divs) keep their own styles — only the
-        // html/body background is forced transparent, with !important
-        // so the page's own body background rule cannot cover the glass.
-        injection += "<style data-preview-glass=\"1\">html, body { background: transparent !important; background-color: transparent !important; }</style>"
+        // Build 11 (user, Build 10 device test: "液态玻璃在哪我请问？"):
+        // glass must be the WHOLE card background, not just a 16pt
+        // frame. Build 10 failed on device because only html/body
+        // were transparent, while the uploaded card's own outer
+        // container still painted a solid white/black background
+        // that covered the glass across the whole card. So, for
+        // preview purposes only (the user's file is never modified),
+        // the outermost containers are also made transparent:
+        // html, body, and the first two levels below body. Deeper
+        // elements keep their own styles — avatar circles, icon
+        // buttons, text and inner rows are untouched — so text and
+        // icons float directly on the native glass, with their own
+        // small backgrounds intact. Background transparency only;
+        // no text, layout, avatar, icon or font change.
+        injection += "<style data-preview-glass=\"1\">html, body, body > *, body > * > * { background: transparent !important; background-color: transparent !important; }</style>"
         if let font = font {
             injection += font.fontFaceStyleBlock()
         }
