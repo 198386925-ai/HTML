@@ -33,6 +33,36 @@ final class GlassCapsuleView: UIView {
     let preview: PreviewWebView
 
     private let kind: Kind
+    private var capsuleHeightConstraint: NSLayoutConstraint?
+
+    /// Capsule height, independent of the web content height.
+    /// When this is smaller than the preview, the preview is
+    /// bottom-aligned inside the capsule and the top is clipped
+    /// (capsule clipsToBounds). When it is larger, the preview sits
+    /// at the bottom and solid capsule colour fills above it.
+    func setCapsuleHeight(_ height: CGFloat) {
+        let h = max(height, 0)
+        if let c = capsuleHeightConstraint {
+            c.constant = h
+        } else {
+            let c = heightAnchor.constraint(equalToConstant: h)
+            c.isActive = true
+            capsuleHeightConstraint = c
+        }
+    }
+
+    /// Background transparency control (Build 4).
+    /// alpha 0 = capsule colour fully transparent, the light-grey page
+    /// shows through where the page drew nothing; alpha 1 = fully solid.
+    func setBackgroundAlpha(_ alpha: CGFloat) {
+        let a = min(max(alpha, 0), 1)
+        switch kind {
+        case .light:
+            backgroundColor = UIColor.white.withAlphaComponent(a)
+        case .dark:
+            backgroundColor = UIColor.black.withAlphaComponent(a)
+        }
+    }
 
     init(kind: Kind) {
         self.kind = kind
@@ -66,12 +96,20 @@ final class GlassCapsuleView: UIView {
         preview.translatesAutoresizingMaskIntoConstraints = false
         preview.layer.cornerRadius = 0
         preview.clipsToBounds = true
+        // Bottom-aligned only (Build 4): the preview's own height is
+        // the web content height (see PreviewWebView). Pinning top as
+        // well would force the preview to stretch to the capsule height
+        // and break the card-height control. With bottom-only pinning,
+        // a taller capsule leaves solid colour above the content and
+        // a shorter capsule clips the top of the content.
         NSLayoutConstraint.activate([
-            preview.topAnchor.constraint(equalTo: topAnchor),
             preview.leadingAnchor.constraint(equalTo: leadingAnchor),
             preview.trailingAnchor.constraint(equalTo: trailingAnchor),
             preview.bottomAnchor.constraint(equalTo: bottomAnchor),
         ])
+        // Definite initial height so the capsule is not ambiguous
+        // before the first measured height arrives.
+        setCapsuleHeight(120)
     }
 
     @available(*, unavailable)
