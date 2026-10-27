@@ -48,14 +48,17 @@ final class MainViewController: UIViewController {
     private var horizontalOffset: CGFloat = 0
     private var verticalOffset: CGFloat = 0
     private var contentScalePercent: CGFloat = 100
-    // Build 9 correction: default 100 = card background fully
-    // solid (scheme colour behind the content). The native liquid
-    // glass capsule is ALWAYS present at full tint, whatever this
-    // value is — this control adjusts only the card background
-    // layer (PreviewWebView.cardBackgroundView), never the glass
-    // and never the content. 0 = card background fully transparent
-    // (glass behind shows through where the card drew nothing).
-    private var backgroundAlphaPercent: CGFloat = 100
+    // Build 11 (user, Build 10 device test: "液态玻璃在哪我请问？"):
+    // default 0 = card background fully transparent, so the native
+    // liquid glass behind the whole card shows through by default
+    // instead of being covered by a solid card background. The
+    // native liquid glass capsule is ALWAYS present at full tint,
+    // whatever this value is — this control adjusts only the card
+    // background layer (PreviewWebView.cardBackgroundView), never
+    // the glass and never the content. Raising the value (step 5)
+    // makes the card background more solid, but that is never the
+    // default, so glass is visible on first load.
+    private var backgroundAlphaPercent: CGFloat = 0
     private var webInteractive: Bool = true
 
     // Controls section views (built in buildControls()).
@@ -530,12 +533,13 @@ final class MainViewController: UIViewController {
         controlsStack.addArrangedSubview(sBlock)
 
         // 5. 背景透明度 (stepper only, no slider, as in screenshot)
-        // Build 9 default 100 (card background fully solid).
+        // Build 11 default 0 (card background fully transparent,
+        // glass shows through the whole card by default).
         // The control is kept, on the TITLE row itself, on ONE line
         // with icon + title + value — no separate button row below —
         // step 5, and it adjusts ONLY the card background layer,
         // never the native glass and never the content.
-        bgValueLabel = UILabel(); bgValueLabel.text = "100"
+        bgValueLabel = UILabel(); bgValueLabel.text = "0"
         let bgMinusBtn = roundButton(title: "−"); bgMinusBtn.addTarget(self, action: #selector(bgMinus), for: .touchUpInside)
         let bgPlusBtn = roundButton(title: "+"); bgPlusBtn.addTarget(self, action: #selector(bgPlus), for: .touchUpInside)
         let bgIconView = UIImageView(image: UIImage(systemName: "paintpalette"))
@@ -675,10 +679,11 @@ final class MainViewController: UIViewController {
         capsuleHeightLocked = false
         heightSlider.value = 0
         heightValueLabel.text = "0"
-        // Build 9: a new file resets background transparency to
-        // 100 (card background fully solid; glass stays present).
-        backgroundAlphaPercent = 100
-        bgValueLabel.text = "100"
+        // Build 11: a new file resets background transparency to
+        // 0 (card background fully transparent; glass shows
+        // through the whole card by default).
+        backgroundAlphaPercent = 0
+        bgValueLabel.text = "0"
         // Other controls are global user preferences and stay as set.
         applyAdjustments()
     }
