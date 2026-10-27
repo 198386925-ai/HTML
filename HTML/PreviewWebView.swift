@@ -74,13 +74,23 @@ final class PreviewWebView: UIView {
     // MARK: Build 4 adjustments (applied to the WKWebView view itself,
     // so height measurement inside the page is unaffected)
 
-    /// Offset (points) + scale for the web content. Scale is around the
-    /// view centre; the capsule clips overflow, so the capsule itself
-    /// never moves or resizes for offset/scale changes.
+    /// Last transform applied, re-applied after every load so a
+    /// reload (new file, font import, permission-granted re-render)
+    /// can never leave part of the content untransformed.
+    private var lastTransform = CGAffineTransform.identity
+
+    /// Offset (points) + scale for the WHOLE web content.
+    /// The transform is set on the WKWebView view itself, not on any
+    /// inner element, so avatar, phone number, subtitle, icons, text
+    /// and images all move, scale and clip together — nothing inside
+    /// the card stays static while the card is adjusted. Scale is
+    /// around the view centre; the capsule clips overflow, so the
+    /// capsule itself never moves or resizes for offset/scale changes.
     func applyTransform(offsetX: CGFloat, offsetY: CGFloat, scale: CGFloat) {
         var t = CGAffineTransform(scaleX: scale, y: scale)
         t.tx = offsetX
         t.ty = offsetY
+        lastTransform = t
         webView.transform = t
     }
 
@@ -94,6 +104,11 @@ final class PreviewWebView: UIView {
         self.scheme = scheme
 
         let configuration = WKWebViewConfiguration()
+        // Build 7 (location): nothing here blocks the page's location
+        // lookup. JavaScript stays enabled and no content rule blocks
+        // geolocation; whether the page's own geolocation call succeeds
+        // depends on the app's location authorization (requested by
+        // MainViewController), not on this configuration.
         // No JavaScript bridge is needed except the height reporter, which
         // is added to this webview's own configuration only. The handler
         // is created without an owner first (it holds only a weak one),
@@ -159,6 +174,10 @@ final class PreviewWebView: UIView {
         originalHTML = html
         importedFont = font
         webView.loadHTMLString(processedHTML(from: html, font: font), baseURL: nil)
+        // Re-apply the whole-content transform so the reloaded card
+        // (avatar, text, icons included) keeps following the card's
+        // current height/offset/scale adjustments.
+        webView.transform = lastTransform
     }
 
     /// Clears the preview back to an empty, zero-content state.
