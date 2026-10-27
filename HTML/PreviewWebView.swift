@@ -91,8 +91,15 @@ final class PreviewWebView: UIView {
         webView.scrollView.bounces = false
         webView.scrollView.showsVerticalScrollIndicator = false
         webView.scrollView.showsHorizontalScrollIndicator = false
-        // Do NOT touch the webview's opacity or the page body's opacity:
-        // the uploaded page paints its own background.
+        // Background removal (user's first step: "remove the background,
+        // that is the liquid glass effect"): the webview itself must not
+        // paint a solid background over the system glass behind it.
+        // Only the background is made transparent here — text, icons,
+        // layout and font of the uploaded page are untouched.
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
+        backgroundColor = .clear
         webView.navigationDelegate = self
 
         // Forcing the trait collection is the second half of the
@@ -159,6 +166,13 @@ final class PreviewWebView: UIView {
         // rules (media queries, color-scheme-aware controls) should use.
         injection += "<meta name=\"color-scheme\" content=\"\(scheme.cssValue)\">"
         injection += "<style data-preview-scheme=\"1\">:root { color-scheme: \(scheme.cssValue); } html { color-scheme: \(scheme.cssValue); }</style>"
+        // Background removal, html/body only: make the page's root
+        // backgrounds transparent so the native system glass behind
+        // this webview becomes the card's background. Inner elements
+        // (text, icons, card divs) keep their own styles — only the
+        // html/body background is forced transparent, with !important
+        // so the page's own body background rule cannot cover the glass.
+        injection += "<style data-preview-glass=\"1\">html, body { background: transparent !important; background-color: transparent !important; }</style>"
         if let font = font {
             injection += font.fontFaceStyleBlock()
         }
