@@ -287,21 +287,23 @@ final class MainViewController: UIViewController {
 
     // MARK: Build 4 controls (below the previews, global to both)
 
-    // Build 5: -/+ buttons smaller (38pt, was 44pt and looked
-    // ~60pt in the Build 4 screenshot layout) so the slider gets
-    // longer; slider thumb also smaller to match.
+    // Build 6 (local only, NOT pushed): compact controls — user said
+    // the panel is far too big. Buttons 38 -> 28pt, thumb 20 -> 16pt,
+    // icons 28 -> 20pt, fonts one step down, descriptions one line,
+    // all vertical spacing roughly halved, so each row is about half
+    // the height it was in Build 5. Values/behaviour unchanged.
     private func roundButton(title: String) -> UIButton {
         let b = UIButton(type: .system)
         b.setTitle(title, for: .normal)
-        b.titleLabel?.font = .systemFont(ofSize: 18, weight: .medium)
+        b.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
         b.backgroundColor = .systemGray5
         b.setTitleColor(.black, for: .normal)
-        b.layer.cornerRadius = 19
+        b.layer.cornerRadius = 14
         b.clipsToBounds = true
         b.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            b.widthAnchor.constraint(equalToConstant: 38),
-            b.heightAnchor.constraint(equalToConstant: 38),
+            b.widthAnchor.constraint(equalToConstant: 28),
+            b.heightAnchor.constraint(equalToConstant: 28),
         ])
         return b
     }
@@ -313,8 +315,8 @@ final class MainViewController: UIViewController {
         s.value = value
         s.minimumTrackTintColor = .black
         s.maximumTrackTintColor = .systemGray4
-        // Small thumb (20pt white circle) to match the smaller buttons.
-        let size = CGSize(width: 20, height: 20)
+        // Small thumb (16pt white circle) to match the smaller buttons.
+        let size = CGSize(width: 16, height: 16)
         UIGraphicsBeginImageContextWithOptions(size, false, 0)
         let ctx = UIGraphicsGetCurrentContext()
         ctx?.setFillColor(UIColor.white.cgColor)
@@ -337,28 +339,29 @@ final class MainViewController: UIViewController {
         iconView.contentMode = .scaleAspectFit
         iconView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            iconView.widthAnchor.constraint(equalToConstant: 28),
-            iconView.heightAnchor.constraint(equalToConstant: 28),
+            iconView.widthAnchor.constraint(equalToConstant: 20),
+            iconView.heightAnchor.constraint(equalToConstant: 20),
         ])
         let titleLabel = UILabel()
         titleLabel.text = title
-        titleLabel.font = .preferredFont(forTextStyle: .headline)
+        titleLabel.font = .preferredFont(forTextStyle: .subheadline)
         titleLabel.textColor = .black
-        valueLabel.font = .preferredFont(forTextStyle: .headline)
+        valueLabel.font = .preferredFont(forTextStyle: .subheadline)
         valueLabel.textColor = .black
         valueLabel.textAlignment = .right
         let header = UIStackView(arrangedSubviews: [iconView, titleLabel, valueLabel])
         header.axis = .horizontal
-        header.spacing = 10
+        header.spacing = 8
         header.alignment = .center
         let desc = UILabel()
         desc.text = description
-        desc.font = .preferredFont(forTextStyle: .subheadline)
+        desc.font = .preferredFont(forTextStyle: .caption1)
         desc.textColor = .darkGray
-        desc.numberOfLines = 0
+        desc.numberOfLines = 1
+        desc.lineBreakMode = .byTruncatingTail
         let col = UIStackView(arrangedSubviews: [header, desc])
         col.axis = .vertical
-        col.spacing = 4
+        col.spacing = 2
         col.alignment = .fill
         return col
     }
@@ -366,26 +369,26 @@ final class MainViewController: UIViewController {
     private func sliderRow(slider: UISlider, minus: UIButton, plus: UIButton) -> UIStackView {
         let row = UIStackView(arrangedSubviews: [minus, slider, plus])
         row.axis = .horizontal
-        row.spacing = 12
+        row.spacing = 8
         row.alignment = .center
         return row
     }
 
     private func buildControls() {
         controlsContainer.backgroundColor = .white
-        controlsContainer.layer.cornerRadius = 20
+        controlsContainer.layer.cornerRadius = 16
         controlsContainer.clipsToBounds = true
         controlsContainer.isHidden = true
         controlsStack.axis = .vertical
-        controlsStack.spacing = 20
+        controlsStack.spacing = 10
         controlsStack.alignment = .fill
         controlsContainer.addSubview(controlsStack)
         controlsStack.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            controlsStack.topAnchor.constraint(equalTo: controlsContainer.topAnchor, constant: 16),
-            controlsStack.leadingAnchor.constraint(equalTo: controlsContainer.leadingAnchor, constant: 16),
-            controlsStack.trailingAnchor.constraint(equalTo: controlsContainer.trailingAnchor, constant: -16),
-            controlsStack.bottomAnchor.constraint(equalTo: controlsContainer.bottomAnchor, constant: -16),
+            controlsStack.topAnchor.constraint(equalTo: controlsContainer.topAnchor, constant: 10),
+            controlsStack.leadingAnchor.constraint(equalTo: controlsContainer.leadingAnchor, constant: 10),
+            controlsStack.trailingAnchor.constraint(equalTo: controlsContainer.trailingAnchor, constant: -10),
+            controlsStack.bottomAnchor.constraint(equalTo: controlsContainer.bottomAnchor, constant: -10),
         ])
 
         // 1. 卡片高度
@@ -399,7 +402,7 @@ final class MainViewController: UIViewController {
         hPlus.addTarget(self, action: #selector(heightPlus), for: .touchUpInside)
         let hCol = controlRow(icon: "arrow.up.arrow.down", title: "卡片高度", valueLabel: heightValueLabel, description: "网页内容有多高，胶囊就是多高；调高了从底边往上长，超出部分看不到")
         let hBlock = UIStackView(arrangedSubviews: [hCol, sliderRow(slider: heightSlider, minus: hMinus, plus: hPlus)])
-        hBlock.axis = .vertical; hBlock.spacing = 10
+        hBlock.axis = .vertical; hBlock.spacing = 5
         controlsStack.addArrangedSubview(hBlock)
 
         // 2. 横向偏移
@@ -410,7 +413,7 @@ final class MainViewController: UIViewController {
         let xPlusBtn = roundButton(title: "+"); xPlusBtn.addTarget(self, action: #selector(xPlus), for: .touchUpInside)
         let xCol = controlRow(icon: "arrow.left.arrow.right", title: "横向偏移", valueLabel: xValueLabel, description: "把网页内容左右挪一挪，填负数往左；胶囊本身不动")
         let xBlock = UIStackView(arrangedSubviews: [xCol, sliderRow(slider: xSlider, minus: xMinusBtn, plus: xPlusBtn)])
-        xBlock.axis = .vertical; xBlock.spacing = 10
+        xBlock.axis = .vertical; xBlock.spacing = 5
         controlsStack.addArrangedSubview(xBlock)
 
         // 3. 纵向偏移
@@ -421,7 +424,7 @@ final class MainViewController: UIViewController {
         let yPlusBtn = roundButton(title: "+"); yPlusBtn.addTarget(self, action: #selector(yPlus), for: .touchUpInside)
         let yCol = controlRow(icon: "arrow.up.arrow.down", title: "纵向偏移", valueLabel: yValueLabel, description: "把网页内容上下挪一挪，填负数往上；胶囊本身不动")
         let yBlock = UIStackView(arrangedSubviews: [yCol, sliderRow(slider: ySlider, minus: yMinusBtn, plus: yPlusBtn)])
-        yBlock.axis = .vertical; yBlock.spacing = 10
+        yBlock.axis = .vertical; yBlock.spacing = 5
         controlsStack.addArrangedSubview(yBlock)
 
         // 4. 内容缩放
@@ -432,33 +435,53 @@ final class MainViewController: UIViewController {
         let sPlus = roundButton(title: "+"); sPlus.addTarget(self, action: #selector(scalePlus), for: .touchUpInside)
         let sCol = controlRow(icon: "arrow.up.left.and.arrow.down.right", title: "内容缩放", valueLabel: scaleValueLabel, description: "把网页内容放大或缩小，100 是原样；胶囊本身不变")
         let sBlock = UIStackView(arrangedSubviews: [sCol, sliderRow(slider: scaleSlider, minus: sMinus, plus: sPlus)])
-        sBlock.axis = .vertical; sBlock.spacing = 10
+        sBlock.axis = .vertical; sBlock.spacing = 5
         controlsStack.addArrangedSubview(sBlock)
 
         // 5. 背景透明度 (stepper only, no slider, as in screenshot)
         // Build 5 default 100 (solid), not 0.
+        // User correction: the -/+ buttons live on the TITLE row itself,
+        // on ONE line with icon + title + value — no separate button row below.
         bgValueLabel = UILabel(); bgValueLabel.text = "100"
         let bgMinusBtn = roundButton(title: "−"); bgMinusBtn.addTarget(self, action: #selector(bgMinus), for: .touchUpInside)
         let bgPlusBtn = roundButton(title: "+"); bgPlusBtn.addTarget(self, action: #selector(bgPlus), for: .touchUpInside)
-        let bgCol = controlRow(icon: "paintpalette", title: "背景透明度", valueLabel: bgValueLabel, description: "网页没画东西的地方透出的底色，0 是完全透明，100 是实色")
-        let bgRow = UIStackView(arrangedSubviews: [bgMinusBtn, bgPlusBtn])
-        bgRow.axis = .horizontal; bgRow.spacing = 12; bgRow.alignment = .center
-        let bgSpacer = UIView()
-        let bgControls = UIStackView(arrangedSubviews: [bgSpacer, bgRow])
-        bgControls.axis = .horizontal; bgControls.spacing = 12
-        let bgBlock = UIStackView(arrangedSubviews: [bgCol, bgControls])
-        bgBlock.axis = .vertical; bgBlock.spacing = 10
+        let bgIconView = UIImageView(image: UIImage(systemName: "paintpalette"))
+        bgIconView.tintColor = .black
+        bgIconView.contentMode = .scaleAspectFit
+        bgIconView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            bgIconView.widthAnchor.constraint(equalToConstant: 20),
+            bgIconView.heightAnchor.constraint(equalToConstant: 20),
+        ])
+        let bgTitleLabel = UILabel()
+        bgTitleLabel.text = "背景透明度"
+        bgTitleLabel.font = .preferredFont(forTextStyle: .subheadline)
+        bgTitleLabel.textColor = .black
+        bgValueLabel.font = .preferredFont(forTextStyle: .subheadline)
+        bgValueLabel.textColor = .black
+        bgValueLabel.textAlignment = .right
+        let bgHeader = UIStackView(arrangedSubviews: [bgIconView, bgTitleLabel, bgValueLabel, bgMinusBtn, bgPlusBtn])
+        bgHeader.axis = .horizontal; bgHeader.spacing = 8; bgHeader.alignment = .center
+        let bgDesc = UILabel()
+        bgDesc.text = "网页没画东西的地方透出的底色，0 是完全透明，100 是实色"
+        bgDesc.font = .preferredFont(forTextStyle: .caption1)
+        bgDesc.textColor = .darkGray
+        bgDesc.numberOfLines = 1
+        bgDesc.lineBreakMode = .byTruncatingTail
+        let bgBlock = UIStackView(arrangedSubviews: [bgHeader, bgDesc])
+        bgBlock.axis = .vertical; bgBlock.spacing = 2
         controlsStack.addArrangedSubview(bgBlock)
 
         // 6. 网页可交互
         let swLabel = UILabel(); swLabel.text = "开"
         interactiveSwitch = UISwitch()
+        interactiveSwitch.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
         interactiveSwitch.isOn = true
         interactiveSwitch.addTarget(self, action: #selector(interactiveChanged), for: .valueChanged)
         let swCol = controlRow(icon: "message", title: "网页可交互", valueLabel: swLabel, description: "关 = 网页只是装饰，点它等于点到后面的东西；开 = 网页自己接着点击")
         // Replace the value label in the header with the switch: rebuild header row simply by appending switch to the block.
         let swRow = UIStackView(arrangedSubviews: [swCol, interactiveSwitch])
-        swRow.axis = .horizontal; swRow.spacing = 12; swRow.alignment = .center
+        swRow.axis = .horizontal; swRow.spacing = 8; swRow.alignment = .center
         controlsStack.addArrangedSubview(swRow)
 
         // Height callbacks: light preview drives the default; dark mirrors it.
@@ -513,8 +536,11 @@ final class MainViewController: UIViewController {
     @objc private func scaleMinus() { scaleSlider.value -= 1; scaleSliderChanged() }
     @objc private func scalePlus() { scaleSlider.value += 1; scaleSliderChanged() }
 
-    @objc private func bgMinus() { backgroundAlphaPercent = min(max(backgroundAlphaPercent - 1, 0), 100); bgValueLabel.text = "\(Int(backgroundAlphaPercent))"; applyAdjustments() }
-    @objc private func bgPlus() { backgroundAlphaPercent = min(max(backgroundAlphaPercent + 1, 0), 100); bgValueLabel.text = "\(Int(backgroundAlphaPercent))"; applyAdjustments() }
+    // Build 6 (user-approved): background transparency is the ONE exception
+    // to the +/-1 rule — it steps by exactly 5 per tap, clamped 0...100.
+    // All other controls (height, x, y, scale) remain strictly +/-1.
+    @objc private func bgMinus() { backgroundAlphaPercent = min(max(backgroundAlphaPercent - 5, 0), 100); bgValueLabel.text = "\(Int(backgroundAlphaPercent))"; applyAdjustments() }
+    @objc private func bgPlus() { backgroundAlphaPercent = min(max(backgroundAlphaPercent + 5, 0), 100); bgValueLabel.text = "\(Int(backgroundAlphaPercent))"; applyAdjustments() }
 
     @objc private func interactiveChanged() { webInteractive = interactiveSwitch.isOn; applyAdjustments() }
 
