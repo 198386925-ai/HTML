@@ -13,7 +13,7 @@ xcodebuild -version
 SDK_VERSION="$(xcrun --sdk iphoneos --show-sdk-version)"
 case "$SDK_VERSION" in
   26.*) ;;
-  *) echo "ERROR: This app requires an iOS 26 SDK (native UIGlassEffect); found $SDK_VERSION"; exit 1 ;;
+  *) echo "ERROR: This app requires an iOS 26 SDK; found $SDK_VERSION"; exit 1 ;;
 esac
 
 mkdir -p output
