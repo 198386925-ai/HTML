@@ -595,9 +595,17 @@ final class MainViewController: UIViewController {
         // not through here, so they still work after the lock.
         if !capsuleHeightLocked {
             capsuleHeightLocked = true
-            fixedCardHeight = measuredContentHeight
-            heightSlider.value = Float(measuredContentHeight)
-            heightValueLabel.text = "\(Int(measuredContentHeight))"
+            // Build 10: lock capsule height to content height +
+            // 2 * glassMargin (16pt each side), NOT content height
+            // alone. Build 9 locked it to content height exactly,
+            // so the solid card background covered the glass with
+            // zero margin and no glass was visible on device.
+            // The slider/label now show the CAPSULE height (the
+            // value the 卡片高度 control edits), which is 32pt
+            // more than the measured content height by default.
+            fixedCardHeight = measuredContentHeight + 2 * GlassCapsuleView.glassMargin
+            heightSlider.value = Float(fixedCardHeight!)
+            heightValueLabel.text = "\(Int(fixedCardHeight!))"
             applyAdjustments()
         }
     }
@@ -610,7 +618,14 @@ final class MainViewController: UIViewController {
         // the avatar / number / icons / text. Offset still moves the
         // whole content (position follows) and the manual scale
         // control still scales it, but only when the user uses it.
-        let capsuleHeight = fixedCardHeight ?? measuredContentHeight
+        // Build 10: before any lock, the default capsule is also
+        // content + 2 * margin, never content exactly, so the glass
+        // frame is visible from the first render. Manual height
+        // changes set fixedCardHeight directly (the capsule height);
+        // content is never stretched to fill it, so the glass margin
+        // stays visible (top/left/right always 16pt; the bottom band
+        // is capsule height minus content height minus 16pt).
+        let capsuleHeight = fixedCardHeight ?? (measuredContentHeight + 2 * GlassCapsuleView.glassMargin)
         for capsule in [lightCapsule, darkCapsule] {
             capsule.setCapsuleHeight(capsuleHeight)
             capsule.setCardBackgroundAlpha(backgroundAlphaPercent / 100)
@@ -630,8 +645,8 @@ final class MainViewController: UIViewController {
     // Build 5: every -/+ button steps by exactly 1 per tap.
     // Slider drag still moves continuously; buttons are strictly +/-1.
     @objc private func heightSliderChanged() { setHeight(CGFloat(heightSlider.value)) }
-    @objc private func heightMinus() { setHeight((fixedCardHeight ?? measuredContentHeight) - 1) }
-    @objc private func heightPlus() { setHeight((fixedCardHeight ?? measuredContentHeight) + 1) }
+    @objc private func heightMinus() { setHeight((fixedCardHeight ?? (measuredContentHeight + 2 * GlassCapsuleView.glassMargin)) - 1) }
+    @objc private func heightPlus() { setHeight((fixedCardHeight ?? (measuredContentHeight + 2 * GlassCapsuleView.glassMargin)) + 1) }
 
     @objc private func xSliderChanged() { horizontalOffset = CGFloat(xSlider.value); xValueLabel.text = "\(Int(horizontalOffset))"; applyAdjustments() }
     @objc private func xMinus() { xSlider.value -= 1; xSliderChanged() }
